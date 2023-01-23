@@ -1,0 +1,60 @@
+Web server interface: 
+Introducción.
+1.Requisitos
+SAMprot está diseñado para el análisis estadístico de datos de proteómica “label free” generados a partir de la plataforma computacional proteómica MaxQuant. Para ello el único requisito que necesita la aplicación es un archivo llamado “proteinGroups.txt”.
+2. Parámetros por defecto
+El pre procesamiento de los datos es importante para el estudio estadístico “dowstreaming” así como la correcta visualización de los datos a manejar , es por ello que existen una serie de parámetros por defecto ya seleccionados, los utilizados en el análisis de datos proteómicos que integran este Trabajo Fin de Grado, los cuales nos han permitido generar resultados óptimos. Sin embargo, existe la posibilidad de variar dichos parámetros si se requiere. Este tutorial recorrerá el conjunto total de funcionalidades que incluye la aplicación SAMprot. 
+3. Reactividad.
+Esta aplicación está diseñada con un alto nivel de reactividad. Las elecciones que se hacen, desde los primeros pasos en el filtrado dictan el funcionamiento de todas las funciones que integran el programa, influenciando hasta los gráficos finales. De esta forma es posible ir desde el proceso de análisis de datos y regresar a la página de preprocesamiento, alterar los parámetros allí presentes y obtener resultados distintos. De esta forma, es de gran utilidad en el caso de que los parámetros iniciales no sean los apropiados o a lo largo del análisis sea necesario variar dichos parámetros.  
+
+2.	Data handling
+2.1	File input
+
+Si no se ha llevado a cabo ningún procesamiento de datos, se puede cargar un nuevo archivo, o en el caso de haberse llevado a cabo, se puede volver a cargar el archivo. En esta versión, solo se permiten archivos que representen la salida de MaxQuant. Normalmente la ruta que contiene los resultados de MaxQuant es la siguiente: 
+
+Carpeta de resultados > combined > txt > “proteinGroups.txt”.
+
+Una vez cargado el archivo se elige entre “Intensity” o “LFQ intensity” para selección de las columnas que contengan la cuantificación de cada una de las proteínas presentes en la lista de proteínas obtenida, se recomienda utilizar la opción “LFQ intensity” para la mayoría de los experimentos de proteómica “label-free”. A continuación, se selecciona el botón “Show columns” ubicará el conjunto de columnas que hacen referencia a las cuantificaciones obtenidas por MaxQuant.
+
+Al mostrar el conjunto de columnas referentes a las réplicas de todas las condiciones que manejamos en el experimento tendremos que seleccionar las dos condiciones a estudiar en el análisis, para ello se deben de seleccionar las columnas que contienen los datos de interés y para ello se introduce a modo de expresión regular el nombre de las columnas de interés tanto para la condición control como la condición tratamiento, indicando, finalmente el número de réplicas para cada condición. Un tutorial sobre cómo se construyen las expresiones regulares se puede encontrar en la siguiente url: https://www.javatpoint.com/regex
+
+2.2	Preprocessing. 
+En el apartado preprocesamiento, encontramos tres acciones a llevar a cabo; la primera es el filtrado, para ello seleccionamos el número mínimo de réplicas dentro de cada condición para las cuales debe de haberse identificado cada proteína. A continuación, se incluye la posibilidad de llevar a cabo la normalización de los datos, cuya opción es no por defecto ya que los datos procedentes de MaxQuant ya han sido normalizados previamente por la plataforma proteómica computacional. Finalmente se elige el paso de imputación, para ello se puede elegir entre llevar a cabo una imputación siguiendo una distribución de probabilidad normal o bien a través del algoritmo de aprendizaje no supervisado “K-nearest neighbors”.   Finalmente, una vez completado el apartado de preprocesamiento se debe seleccionar el botón “Display table” para visualizar el dataset preprocesado.
+2.3	Venn Diagram
+Existe la posibilidad de representar un diagrama de Venn con el objetivo de visualizar la cantidad de proteínas exclusivas para cada condición y comunes, dentro de la opción “Venn Diagram”. Para ello se introduce el nombre de cada condición a manejar, así como el color a representar cada condición y se selecciona la extensión junto con la calidad y el nombre del gráfico para descargar.
+2.4	Download tables
+En esta opción se descargará el dataset preprocesado en extensión “.xlsx” introduciendo el nombre a tener del mismo. 
+
+3.	Quality metrics
+En este apartado se muestran un conjunto de gráficos que nos reflejan como ha ido el preprocesamiento y para su representación solo hay que seleccionar el botón “Render plot” presente bajo cada título de cada gráfico; así destacamos un diagrama de cajas y bigotes (“boxplot”) y un histograma que nos dan una idea de la distribución de nuestros datos tras la normalización, destacar que en la opción de “histogram” se puede introducir el nombre de cada una de las muestras para ir viendo su distribución de intensidades, así como se encuentra la opción de cambiar el color. Destacar un “Dispersion plot” en cual representa el coeficiente de variación dándonos una idea del grado de dispersión de nuestros datos. Los gráficos “Pre imputation plot” y “Post imputation plot” nos muestran la proporción de “missing values” antes y después de llevar a cabo el proceso de imputación. Finalmente se representa un análisis de componentes principales de las muestras que estemos manejando en el análisis. De nuevo destacar que debido a la reactividad en la que está diseñada la aplicación, estos gráficos se generan automáticamente de acuerdo con el data set cargado y preprocesado en el apartado de “data handling”, es por ello que cambios en dicho apartado se reflejan automáticamente en los gráficos de este apartado así como en los pasos posteriores. 
+4.	Differential analysis
+4.1	Differential analysis
+En este apartado se incluyen todas las opciones para el análisis diferencial de nuestros datos. En primer lugar, se comienza eligiendo el tipo de test a desempeñar; ya sea un test de la t de Student para muestras independientes o un test de la t pareado, para lo cual es muy importante ser consciente de la forma en la que han sido recopilados nuestros datos, para llevar a cabo un correcto análisis posterior. 
+Posteriormente se puede seleccionar de que manera ordenar la tabla resultante del análisis diferencial, las opciones abarcan en orden creciente de p valor o en orden creciente de valor q. A continuación, se fija el valor de Log2FC a considerar (cota superior y cota inferior) así como el valor de significancia, Log10 p valor. Finalmente se selecciona un método para el cálculo del p valor ajustado.
+4.2	Download tables
+Se incluye la opción de descargar la tabla del análisis diferencial resultante en formato “.xlsx”.
+5.	Differential analysis plots.
+5.1	Differential analysis plots
+En este apartado se representan gráficos de volcán y mapas de calor que contienen el conjunto de proteínas con cambios significativos en su abundancia. De nuevo, como en cada ocasión dentro de esta aplicación en la que se necesite generar un gráfico, para la representación de cada uno de los gráficos será necesario accionar el botón “Render plot”. Para el caso del gráfico de volcán podemos seleccionar el número de proteínas significativas cuyo identificador mostrar en el gráfico, así como introducir el título del gráfico. Para el caso del gráfico de volcán, se generan dos gráficos; uno que representa las proteínas comunes en las condiciones que estemos estudiando (“Heatmap”) y otro (“Differential heatmap”) que representa aquellas proteínas con cambios significativos en la abundancia relativa. 
+5.2	Download plot options.
+Finalmente se incluye la posibilidad de descargar dichos gráficos seleccionando la extensión, la calidad y existiendo la posibilidad de nombrar el fichero descargado. 
+
+6.	Functional analysis.
+6.1	Functional analysis.
+En este apartado se llevará a cabo el análisis funcional sobre el conjunto de proteínas con cambios significativos en su abundancia obtenidas del análisis diferencial anterior. Para ello se ha de seleccionar el identificador del organismo objeto de estudio, el cual podemos encontrar en la siguiente lista: https://biit.cs.ut.ee/gprofiler/page/organism-list , el tipo de identificador proteico sobre el que mapear y el valor umbral de significancia a conservar de los términos mapeados (p valor).
+6.2	Plots
+Los gráficos obtenidos del análisis funcional son 3; gráfico de puntos (“Dotplot”), gráfico de barras (“Barplot”) y gráfico de Manhattan. Los dos primeros poseen la opción de seleccionar el número de términos a contener en cada uno de los gráficos, así como el tamaño de letra, junto con el título.
+6.3	Download plot options.
+En este caso también se incluye la posibilidad de descargar dichos gráficos seleccionando la extensión, la calidad y existiendo la posibilidad de nombrar el fichero descargado. Para el caso de descargar el Manhattan plot será necesario seleccionar la opción “Download plot as png” presente en el gráfico, dentro del apartado superior derecho, en el icono con forma de cámara. 
+
+6.4	Download tables
+Se incluye la opción de descargar la tabla del análisis funcional resultante en formato “.xlsx”.
+
+7.	Interaction analysis
+7.1	Stringdb
+En este apartado se lleva a cabo el análisis de interacción de las proteínas que mostraron cambios significativos en su abundancia, para ello se representa la red de interacción de las proteínas sobre e infra expresadas al seleccionar el botón “Render plot” debajo de cada opción.
+Además, se representan una serie de métricas de análisis de los grafos resultantes tales como el orden, el tamaño, la densidad, las componentes conexas y los nodos con más grado, betweenness, eiguen value y closeness así como el valor de coeficiente de clusterización de cada red.
+7.2	Download  plot options.
+En este caso también se incluye la posibilidad de descargar dichos gráficos seleccionando la extensión, la calidad y existiendo la posibilidad de nombrar el fichero descargado.
+
+
