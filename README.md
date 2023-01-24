@@ -1,6 +1,6 @@
 
  ![Alt text](interface.gif) 
-# Trabajo-Fin-de-Master
+# Trabajo Fin de Master
 En este repositorio se encuentra todo el código generado en el Trabajo Fin de Máster; Desarrollo de un flujo de trabajo en RStudio para la caracterización del papel de la proteína Prn1 en estrés oxidativo en *Candida albicans*.
 <br>
 <br>
@@ -27,13 +27,11 @@ En la carpeta "data" encontramos un archivo "parameters.txt" con el conjunto de 
 - Manhattan plot
 4. Interactions:
 - Interaction networks
-5. Data
+5. Data:
 - *data set* tras preprocesamiento
 - *data set* tras análisis estadístico
 - *data set* tras análisis funcional
+# Creditos
+Paquetes que lo hacen posible: dplyr, ggplot2, ggvenn, VIM, gplots, gprofiler2, igraph, plotly, limma, clusterprofiler, enrichplot, stringdb.
 
-<br>
-#Créditos
-<br>
-Paquetes que lo hacen posible: dplyr, ggplot2, ggvenn, VIM, gplots, gprofiler2, igraph, plotly, limma, clusterprofiler, enrichplot, stringdb
 
