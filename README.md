@@ -7,4 +7,24 @@ En este repositorio se encuentra todo el código generado en el Trabajo Fin de M
 Dicho trabajo abarca un *pipeline* para el análisis de datos de proteómica *label free shotgun* procedentes de MaxQuant cuyos archivos podemos encontrar en la carpeta "Pipeline" que contiene el archivo main.R eje conductor de las funcionalidades desarrolladas y los archivos dataprocessing.R quality_metrics.R, statisticalAnalysis.R, overviewfigures.R, enrichment.R y Network.R que contienen el conjunto de funciones implementadas.
 <br>
 # Requisitos
-- Archivo "ProteinGroups.txt" de MaxQuant. El *data set* utilizado en el presente trabajo se encuentra en la carpeta "data"
+- Archivo "ProteinGroups.txt" de MaxQuant. El *data set* utilizado en el presente trabajo se encuentra en la carpeta "data".
+
+En la carpeta "data" encontramos un archivo "parameters.txt" con el conjunto de parámetros utilizados por MaxQuant para generar el *data set*, así como un documento en formato .pdf donde se da información acerca del significado de cada una de las columnas de dicho *data set*.
+<br>
+# Outputs
+1. Quality metrics:
+- Boxplots
+- Scatter plots
+- Pre/post imputation plots
+- Histograms
+- Principal Component Analysis
+2. Overview figures:
+- Volcano plots
+- Heatmap
+3. Enrichment:
+- Dotplot
+- Barplot
+- Manhattan plot
+4. Interactions:
+- Interaction networks
+
