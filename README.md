@@ -31,7 +31,7 @@ En la carpeta "data" encontramos un archivo "parameters.txt" con el conjunto de 
 - *data set* tras preprocesamiento
 - *data set* tras análisis estadístico
 - *data set* tras análisis funcional
-# Creditos
+# Créditos
 Paquetes que lo hacen posible: dplyr, ggplot2, ggvenn, VIM, gplots, gprofiler2, igraph, plotly, limma, clusterprofiler, enrichplot, stringdb.
 
 
