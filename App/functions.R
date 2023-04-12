@@ -1,4 +1,3 @@
-
 # Installing CRAN packages:
 if(!require(BiocManager)){install.packages("BiocManager")}
 library(BiocManager)
@@ -69,7 +68,7 @@ quick_filtering <- function(raw, input){
     filter(Potential.contaminant != "+") %>% #Nos quedamos con todos aquellos que no tengan un +
     filter(Reverse != "+") %>% #Nos quedamos con todos aquellos que no tengan un +
     filter(Only.identified.by.site != "+") #Nos quedamos con todos aquellos que no tengan un +
-
+  
   #Obtenemos los identificadores
   regex <- regexpr(".*(?=.CGDID)", df$Fasta.headers, perl = TRUE)
   df$Protein <- regmatches(df$Fasta.headers, regex)
@@ -236,12 +235,12 @@ filter_valids <- function(df, unique_proteins, conditions1, min_count, at_least_
   common_df <- filter(common_df, KEEP)
   
   common_df[LOG2.names] <- lapply(LOG2.names,
-                           function(x) {
-                             temp <- common_df[[x]]
-                             temp[!is.finite(temp)] = NA
-                             return(temp)
-                             
-                           })
+                                  function(x) {
+                                    temp <- common_df[[x]]
+                                    temp[!is.finite(temp)] = NA
+                                    return(temp)
+                                    
+                                  })
   
   
   
@@ -312,7 +311,7 @@ impute_KNN_data <- function(df, LOG2.names, ...){
                            })
   
   imp_knn <- kNN(df, variable = LOG2.names, ... )
-
+  
   return(imp_knn)
 }
 
@@ -321,7 +320,7 @@ impute_KNN_data <- function(df, LOG2.names, ...){
 #Processing check
 
 plotCV2 <- function(y, trend = TRUE, main= "Imputation check", ...){
-
+  
   A <- rowMeans(y, na.rm = TRUE) #Hago las medias de las filas
   CV <- (matrixStats::rowSds(data.matrix(y), na.rm = TRUE)/A)^2 #Calculo de la desviaci?n estandar relativa invocando el paquete matrixStats y usando su funci?n rowSds
   res <- data.frame(mean = A, CV = CV)
@@ -341,13 +340,13 @@ boxplot_function <- function(df, cond.names,  ...){
 }
 
 preimputation_state <- function(df, cond.names){
-
+  
   par(mfrow=c(2,2))
   aggr(df[, cond.names], delimiter = "NA", labels = names(df[cond.names]), cex.axis = .5)
 }
 
 postimputation_state <- function(df, cond.names){
-
+  
   par(mfrow=c(2,2))
   aggr(df[, cond.names], delimiter = "NA", labels = names(df[cond.names]), cex.axis = .5)
 }
@@ -362,84 +361,114 @@ histogram <- function(df, colname, color, title){
 #Differential expression analysis
 ##################################################################################
 #Limma function
-statistical_analysis <- function(df, LOG2.names,test, paired = FALSE, replicas_condicion1, replicas_condicion2, condition1, condition2, orden, logfcup, logfcdown, sig, adjval, statval){
+statistical_analysis <- function(df, LOG2.names,test, paired = FALSE, replicas_condicion1, replicas_condicion2, condition1, condition2, logfcup, logfcdown, sig, adjval, statval, unique_proteins, way){
   if (test == 2){
-  condition1_names <- grep(condition1, LOG2.names, value = TRUE)
-  condition2_names <- grep(condition2, LOG2.names, value = TRUE)
-  
-  #Control columns
-  for (i in 1:replicas_condicion1){
-    nam <- paste("control", i, sep = "")
-    assign(nam, condition1_names[i])
-  }  #LOG2.WT1,#LOG2.WT2,#LOG2.WT3,#LOG2.WT4
-  
-  #Treatment columns
-  for (i in 1:replicas_condicion2){
-    nam <- paste("prob_column", i, sep = "")
-    assign(nam, condition2_names[i])
-  }  #LOG2.WT_H2O2_1, #LOG2.WT_H2O2_2, #LOG2.WT_H2O2_3, #LOG2.WT_H2O2_4
-  ct <- c()
-  for (i in ls()[grep("control", ls())]){
-    new_value_control <- get(i)
-    ct <- c(ct, new_value_control)
-  }
-  print(ct)
-  
-  tr <- c()
-  for (i in ls()[grep("prob_column", ls())]){
-    new_value_prob <- get(i)
-    tr <- c(tr, new_value_prob)
-  }
-  print(tr)
-  
-  if (paired == FALSE){
-  control <- rep(1, replicas_condicion1)
-  treatment <- rep(2, replicas_condicion2)
-  design <- model.matrix(~factor(c(control, treatment)))
-  } else if (paired == TRUE){
-    pairinfo = factor(rep(1:replicas_condicion1,2))
-    control <- rep(1, replicas_condicion1)
-    treatment <- rep(2, replicas_condicion2)
-    design <- model.matrix(~pairinfo+factor(c(control, treatment)))
-  }
-  
-  dat <- df[, c(ct, tr)]
-  n <- dim(dat)[1]
-  fit <- lmFit(dat, design)
-  fit.eb <- eBayes(fit)
-  print(colnames(fit.eb))
-  logFC <- fit.eb$coefficients[, 2] #C?lculo del log fold-change
-  p.value <- fit.eb$p.value[, 2]    # p-valor moderado correspondiente al estad?stico t moderado.
-  adj.P.Val <- p.adjust(p.value, method = adjval)
-  
-  if (statval == 1){
-  expression <- case_when(logFC >= logfcup & -log10(p.value) >= sig ~ "Up-regulated",
-                          logFC <= logfcdown & -log10(p.value) >= sig ~ "Down-regulated",
-                          TRUE ~ "Unchanged")#labels para expresion 
-  } else if (statval == 2){
-    expression <- case_when(logFC >= logfcup & -log10(adj.P.Val) >= sig ~ "Up-regulated",
-                            logFC <= logfcdown & -log10(adj.P.Val) >= sig ~ "Down-regulated",
-                            TRUE ~ "Unchanged")
-  }
-  results.eb <- data.frame(logFC, p.value, adj.P.Val, expression)
-  if (orden == 1){
-    results.eb <- results.eb[order(results.eb$p.value), ] #Ordenamos por p.value
-  } else if (orden ==2){
-    results.eb <- results.eb[order(results.eb$adj.P.Val), ]
-  }
-  results_rownames <-rownames(results.eb) #Obtenemos el nombre de las filas
-  Protein <- c()                          #Creamos un vector vac?o
-  Protein_description <- c()
-  for (i in results_rownames){
-    new_value <- df[i, "Protein"]     #iteramos los rownames en la columna deseada
-    Protein <- c(Protein, new_value)      #Creamos la columna con identificadores
-    new_desc <- df[i, "Protein_description"]
-    Protein_description <- c(Protein_description, new_desc) #Creamos la columna con descriptores. 
-  }
-  results.eb$Protein <- Protein 
-  results.eb$Protein_description <- Protein_description
-  row.names(results.eb) <- results.eb$Protein
-  return(results.eb)
+    condition1_names <- grep(condition1, LOG2.names, value = TRUE)
+    condition2_names <- grep(condition2, LOG2.names, value = TRUE)
+    
+    #Control columns
+    for (i in 1:replicas_condicion1){
+      nam <- paste("control", i, sep = "")
+      assign(nam, condition1_names[i])
+    }  #LOG2.WT1,#LOG2.WT2,#LOG2.WT3,#LOG2.WT4
+    
+    #Treatment columns
+    for (i in 1:replicas_condicion2){
+      nam <- paste("prob_column", i, sep = "")
+      assign(nam, condition2_names[i])
+    }  #LOG2.WT_H2O2_1, #LOG2.WT_H2O2_2, #LOG2.WT_H2O2_3, #LOG2.WT_H2O2_4
+    ct <- c()
+    for (i in ls()[grep("control", ls())]){
+      new_value_control <- get(i)
+      ct <- c(ct, new_value_control)
+    }
+    print(ct)
+    
+    tr <- c()
+    for (i in ls()[grep("prob_column", ls())]){
+      new_value_prob <- get(i)
+      tr <- c(tr, new_value_prob)
+    }
+    print(tr)
+    
+    if (paired == FALSE){
+      control <- rep(1, replicas_condicion1)
+      treatment <- rep(2, replicas_condicion2)
+      design <- model.matrix(~factor(c(control, treatment)))
+    } else if (paired == TRUE){
+      pairinfo = factor(rep(1:replicas_condicion1,2))
+      control <- rep(1, replicas_condicion1)
+      treatment <- rep(2, replicas_condicion2)
+      design <- model.matrix(~pairinfo+factor(c(control, treatment)))
+    }
+    
+    dat <- df[, c(ct, tr)]
+    n <- dim(dat)[1]
+    fit <- lmFit(dat, design)
+    fit.eb <- eBayes(fit)
+    print(colnames(fit.eb))
+    logFC <- fit.eb$coefficients[, 2] #C?lculo del log fold-change
+    p.value <- fit.eb$p.value[, 2]    # p-valor moderado correspondiente al estad?stico t moderado.
+    adj.P.Val <- p.adjust(p.value, method = adjval)
+    
+    if (statval == 1){
+      expression <- case_when(logFC >= logfcup & -log10(p.value) >= sig ~ "Up-regulated",
+                              logFC <= logfcdown & -log10(p.value) >= sig ~ "Down-regulated",
+                              TRUE ~ "Unchanged")#labels para expresion 
+    } else if (statval == 2){
+      expression <- case_when(logFC >= logfcup & -log10(adj.P.Val) >= sig ~ "Up-regulated",
+                              logFC <= logfcdown & -log10(adj.P.Val) >= sig ~ "Down-regulated",
+                              TRUE ~ "Unchanged")
+    }
+    results.eb <- data.frame(logFC, p.value, adj.P.Val, expression)
+    results_rownames <-rownames(results.eb) #Obtenemos el nombre de las filas
+    Protein <- c()                          #Creamos un vector vacio
+    Protein_description <- c()
+    for (i in results_rownames){
+      new_value <- df[i, "Protein"]     #iteramos los rownames en la columna deseada
+      Protein <- c(Protein, new_value)      #Creamos la columna con identificadores
+      new_desc <- df[i, "Protein_description"]
+      Protein_description <- c(Protein_description, new_desc) #Creamos la columna con descriptores. 
+    }
+    results.eb$Protein <- Protein 
+    results.eb$Protein_description <- Protein_description
+    if (way == 1){
+      return(results.eb)
+    } else if (way == 2){
+      #Empezamos a trabajar con las unicas control
+      unique.control <- as.data.frame(unique_proteins[1])
+      fusioncontrol.df <- data.frame(matrix(ncol = 6))
+      n <-  c("logFC", "p.value", "adj.P.Val", "expression", "Protein", "Protein_description")
+      colnames(fusioncontrol.df) <- n
+      
+      for (i in unique.control$Protein){
+        new <- c(min(results.eb$logFC)-2, min(results.eb$p.value)/100, min(results.eb$adj.P.Val)/100, "Down-regulated", i, unique.control$Protein_description[unique.control$Protein==i] )
+        fusioncontrol.df <- rbind(fusioncontrol.df, new)
+      }
+      fusioncontrol.df <- fusioncontrol.df[-1,]  
+      
+      #Empezamos a trabajar con la unicas tratamiento
+      unique.treatment <- as.data.frame(unique_proteins[2])
+      fusiontreatment.df <- data.frame(matrix(ncol = 6))
+      n <-  c("logFC", "p.value", "adj.P.Val", "expression", "Protein", "Protein_description")
+      colnames(fusiontreatment.df) <- n
+      
+      for (i in unique.treatment$Protein){
+        new <- c(max(results.eb$logFC)+2, min(results.eb$p.value)/100, min(results.eb$adj.P.Val)/100, "Up-regulated", i, unique.treatment$Protein_description[unique.treatment$Protein==i] )
+        fusiontreatment.df <- rbind(fusiontreatment.df, new)
+      }
+      fusiontreatment.df <- fusiontreatment.df[-1,] 
+      
+      
+      unique.proteins.limma <- rbind(fusioncontrol.df, fusiontreatment.df)
+      
+      unique.proteins.limma[c("logFC", "p.value", "adj.P.Val")] <- sapply(unique.proteins.limma[c("logFC", "p.value", "adj.P.Val")], as.numeric) 
+      
+      results.eb <- rbind(unique.proteins.limma, results.eb)
+      row.names(results.eb) <- results.eb$Protein
+      return(results.eb)
+    }
+    
   } else if (test == 1){
     condition1_names <- grep(condition1, LOG2.names, value = TRUE)
     condition2_names <- grep(condition2, LOG2.names, value = TRUE)
@@ -453,27 +482,22 @@ statistical_analysis <- function(df, LOG2.names,test, paired = FALSE, replicas_c
       df$tStat[i] <- testResults$statistic
       df$logFC[i] <- mean(valuesB) - mean(valuesA)
       
-      results.eb <- data.frame(df$logFC, df$pValue, df$tStat)
+      results.eb <- data.frame(df$logFC, df$pValue)
       
       
     }
-    colnames(results.eb) <- c("logFC", "p.value", "tStat")
+    colnames(results.eb) <- c("logFC", "p.value")
     results.eb$adj.P.Val <- p.adjust(results.eb$p.value, method = adjval)
     if (statval==1){
       results.eb$expression <- case_when(results.eb$logFC >= logfcup & -log10(results.eb$p.value) >= sig ~ "Up-regulated",
                                          results.eb$logFC <= logfcdown & -log10(results.eb$p.value) >= sig ~ "Down-regulated",
-                                            TRUE ~ "Unchanged")#labels para expresion 
+                                         TRUE ~ "Unchanged")#labels para expresion 
     } else if (statval==2){
       results.eb$expression <- case_when(results.eb$logFC >= logfcup & -log10(results.eb$adj.P.Val) >= sig ~ "Up-regulated",
                                          results.eb$logFC <= logfcdown & -log10(results.eb$adj.P.Val) >= sig ~ "Down-regulated",
                                          TRUE ~ "Unchanged")
     }
     
-    if (orden == 1){
-      results.eb <- results.eb[order(results.eb$p.value), ] #Ordenamos por p.value
-    } else if (orden ==2){
-      results.eb <- results.eb[order(results.eb$adj.P.Val), ]
-    }
     
     Protein <- c()                          #Creamos un vector vac?o
     Protein_description <- c()
@@ -486,9 +510,46 @@ statistical_analysis <- function(df, LOG2.names,test, paired = FALSE, replicas_c
     }
     results.eb$Protein <- Protein 
     results.eb$Protein_description <- Protein_description
-    row.names(results.eb) <- results.eb$Protein
-    return(results.eb)
+    if (way == 1){
+      return(results.eb)
+    } else if (way == 2){
+      #Empezamos a trabajar con las unicas control
+      unique.control <- as.data.frame(unique_proteins[1])
+      fusioncontrol.df <- data.frame(matrix(ncol = 6))
+      n <-  c("logFC", "p.value", "adj.P.Val", "expression", "Protein", "Protein_description")
+      colnames(fusioncontrol.df) <- n
+      
+      for (i in unique.control$Protein){
+        new <- c(min(results.eb$logFC)-2, min(results.eb$p.value)/100, min(results.eb$adj.P.Val)/100, "Down-regulated", i, unique.control$Protein_description[unique.control$Protein==i] )
+        fusioncontrol.df <- rbind(fusioncontrol.df, new)
+      }
+      fusioncontrol.df <- fusioncontrol.df[-1,]  
+      
+      #Empezamos a trabajar con la unicas tratamiento
+      unique.treatment <- as.data.frame(unique_proteins[2])
+      fusiontreatment.df <- data.frame(matrix(ncol = 6))
+      n <-  c("logFC", "p.value", "adj.P.Val", "expression", "Protein", "Protein_description")
+      colnames(fusiontreatment.df) <- n
+      
+      for (i in unique.treatment$Protein){
+        new <- c(max(results.eb$logFC)+2, min(results.eb$p.value)/100, min(results.eb$adj.P.Val)/100, "Up-regulated", i, unique.treatment$Protein_description[unique.treatment$Protein==i] )
+        fusiontreatment.df <- rbind(fusiontreatment.df, new)
+      }
+      fusiontreatment.df <- fusiontreatment.df[-1,] 
+      
+      
+      unique.proteins.limm <- rbind(fusioncontrol.df, fusiontreatment.df)
+      
+      unique.proteins.limm[c("logFC", "p.value", "adj.P.Val")] <- sapply(unique.proteins.limm[c("logFC", "p.value", "adj.P.Val")], as.numeric) 
+      
+      results.eb <- rbind(unique.proteins.limm, results.eb)
+      row.names(results.eb) <- results.eb$Protein
+      return(results.eb)
+    }
+###    
+    
   }
+  
 }
 
 
@@ -548,7 +609,7 @@ volcano_plot <- function(limma, title, label, statval){
     top <- label
     logFC <- limma$logFC
     p.value <- limma$p.value
-  
+    
     
     top_proteins <- bind_rows(
       limma %>% 
@@ -565,11 +626,12 @@ volcano_plot <- function(limma, title, label, statval){
     ry <- c(0, ceiling(max(-log10(p.value), -log10(p.value)))) #Para definir nuestro eje Y cogemos el el m?nimo y el m?ximo de la distribuci?n
     
     ggplot(limma, aes(logFC, -log10(p.value))) +
+      theme_light() +
       geom_point(aes(color = expression), size = 2) +
       scale_color_manual(values = c("green3", "grey78", "firebrick3")) +
       guides(colour = guide_legend(override.aes = list(size=1.5))) +
       ggtitle(title) +
-      labs(y = "-log10 p-value", x = "log2 Fold change") +
+      labs(y = bquote(~-log[10]~ 'q-value'), x = bquote(~log[2]~ 'Fold Change')) +
       geom_label(data = top_proteins,
                  mapping = aes(logFC, -log10(p.value), label = Protein),
                  size = 1.5)
@@ -593,10 +655,11 @@ volcano_plot <- function(limma, title, label, statval){
     ry <- c(0, ceiling(max(-log10(limma$adj.P.Val), -log10(limma$adj.P.Val)))) #Para definir nuestro eje Y cogemos el el m?nimo y el m?ximo de la distribuci?n
     
     ggplot(limma, aes(logFC, -log10(adj.P.Val))) +
-      geom_point(aes(color = expression), size = 2) +
+      theme_light() +
+      geom_point(aes(color = expression), size = 1) +
       scale_color_manual(values = c("green3", "grey78", "firebrick3")) +
       guides(colour = guide_legend(override.aes = list(size=1.5))) +
-      labs(y = "-log10 q-value", x = "log2 Fold change") +
+      labs(y = bquote(~-log[10]~ 'q-value'), x = bquote(~log[2]~ 'Fold Change')) +
       geom_label(data = top_proteins,
                  mapping = aes(logFC, -log10(adj.P.Val), label = Protein),
                  size = 1.5)
@@ -605,15 +668,18 @@ volcano_plot <- function(limma, title, label, statval){
 }
 
 pca <- function(x, group){
-  kmc<-length(unique(group))
   tdata<-t(x[group])
-  km <-kmeans(tdata,(kmc/2),2000) 
+  
   pc<-prcomp(tdata)
-  plot(pc$x[,1], pc$x[,2], pch=16, col = c("salmon", "blue"),main="K-means Clustering", xlab="PC1", ylab="PC2")
+  eigenValues <- pc$sdev ^2
+  totalEigenValue <- sum(eigenValues)
+  pcContribution <- 100 * eigenValues / totalEigenValue
+  contribution1 <- round(100 * eigenValues[1] / totalEigenValue)
+  contribution2 <- round(100 * eigenValues[2] / totalEigenValue)
+  my_colors <- c("salmon", "blue")
+  
+  plot(pc$x[,1], pc$x[,2], pch=16, cex = 3,  col = my_colors[sort(rep(1:(length(group)/2), length(group)/2))] , main="Principal Component Analysis", xlab=paste0("PC1 [", contribution1, "%]"), ylab=paste0("PC2 [", contribution2, "%]"))
   text(pc$x[,1], pc$x[,2],labels=rownames(pc$x),pos=3,offset=0.4,cex=0.7)
-  #pc<-cbind(pc$x[,1], pc$x[,2])
-  #ordispider(pc, factor(km$cluster), label = TRUE)
-  #ordihull(pc, factor(km$cluster), lty = "dotted")
 }
 
 
@@ -701,9 +767,9 @@ Goterms_finder <- function(df, target, numeric_ns, mthreshold, filter_na, organi
 }
 
 dotplot_func <- function(terms, ...){
-
+  
   dotplot(terms[[1]],  ...)
-
+  
 }
 
 gostplot_func <- function(terms, ...){
@@ -712,10 +778,10 @@ gostplot_func <- function(terms, ...){
 }
 
 barplot_func <- function(terms, conditions, ...){
-
+  
   barplot(terms[[2]], ...) + 
     ggplot2::facet_grid(~Cluster) + ggplot2::ylab("Number of proteins") +ggtitle(conditions)
-
+  
 }
 
 ##################################################################################
@@ -734,7 +800,7 @@ interactions_up <- function(df){
   par(mfrow=c(1,1))
   hits_up <- up_mapped$STRING_id[1:100] 
   string_db$plot_network(hits_up)
-
+  
   interactions <- list(up_mapped, down_mapped)
   return(interactions)
   
@@ -748,8 +814,8 @@ interactions_down <- function(df){
   par(mfrow=c(1,1))
   hits_down <- down_mapped$STRING_id[1:100] 
   string_db$plot_network(hits_down)
-
-
+  
+  
 }
 
 ##################################################################################
@@ -873,6 +939,3 @@ igraph_analysis <- function(interactions){
   graph_analysis <- list(graph_analysis_up, graph_analysis_down)
   return(graph_analysis)
 }
-
-
-

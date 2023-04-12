@@ -185,6 +185,11 @@ ui <- dashboardPage(
                                                     choices = list("simple t test approach" = 1,
                                                                    "limma approach" = 2),
                                                     selected = 1),
+                                 checkboxGroupInput(inputId = "proteins",
+                                                    label = "Choose a way to proceed:",
+                                                    choices = list("Common proteins" = 1,
+                                                                   "All proteins" = 2),
+                                                    selected = 1),
                                  switchInput(inputId = "testid",
                                              label = "Test",
                                              value = FALSE,
@@ -193,12 +198,6 @@ ui <- dashboardPage(
                                  h3("Choice:"),
                                  checkboxGroupInput(inputId = "statselected",
                                                     label = "Select a statistic:",
-                                                    choices = list("p-value" = 1,
-                                                                   "q-value" = 2),
-                                                    selected = 1),
-                                 h3("Table order:"),
-                                 checkboxGroupInput(inputId = "orderdif",
-                                                    label = "Select a way of ordering:",
                                                     choices = list("p-value" = 1,
                                                                    "q-value" = 2),
                                                     selected = 1),
@@ -776,7 +775,7 @@ server <- function(input, output) {
   difexpression <- reactive({
     validate(need(!is.null(input$pvaladj),
                   "Please select an option"))
-    statistic_dataframe <- statistical_analysis(data(), LOG2.names(), input$displaytest, input$testid, input$repcond1, input$repcond2, input$condition1, input$condition2, input$orderdif, input$LogFCup, input$LogFCdown, input$sigcutoff, input$pvaladj, input$statselected)
+    statistic_dataframe <- statistical_analysis(data(), LOG2.names(), input$displaytest, input$testid, input$repcond1, input$repcond2, input$condition1, input$condition2, input$LogFCup, input$LogFCdown, input$sigcutoff, input$pvaladj, input$statselected, unique(), input$proteins)
     return(statistic_dataframe)
     
   })
