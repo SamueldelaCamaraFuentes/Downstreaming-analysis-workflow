@@ -17,6 +17,10 @@ if(!require(ggvenn)){install.packages("ggvenn")}
 library(ggvenn)
 if(!require(VIM)){install.packages("VIM")}
 library(VIM)
+if(!require(wrProteo)){install.packages("wrProteo")}
+library(wrProteo)
+if(!require(wrMisc)){install.packages("wrMisc")}
+library(wrMisc)
 if(!require(gplots)){install.packages("gplots")}
 library(gplots)
 if(!require(gprofiler2)){install.packages("gprofiler2")}
@@ -29,6 +33,8 @@ if(!require(plotly)){install.packages("plotly")}
 library(plotly)
 if(!require(matrixStats)){install.packages("matrixStats")}
 library(matrixStats)
+if(!require(ggExtra)){install.packages("ggExtra")}
+library(ggExtra)
 
 #Installing bioconductor packages: 
 if(!require(rsconnect)){BiocManager::install("rsconnect",update=F,ask=F)}
@@ -39,6 +45,8 @@ if(!require(Biobase)){BiocManager::install("Biobase",update=F,ask=F)}
 library(Biobase)
 if(!require(S4Vectors)){BiocManager::install("S4Vectors",update=F,ask=F)}
 library(S4Vectors)
+if(!require(vsn)){BiocManager::install("vsn",update=F,ask=F)}
+library(vsn)
 if(!require(IRanges)){BiocManager::install("IRanges",update=F,ask=F)}
 if(!require(AnnotationDbi)){BiocManager::install("AnnotationDbi",update=F,ask=F)}
 library(AnnotationDbi)
@@ -55,7 +63,6 @@ library(DOSE)
 if(!require(STRINGdb)){BiocManager::install("STRINGdb",update=F,ask=F)}
 library(STRINGdb)
 
-string_db <- STRINGdb$new(version="11.5", species=237561, score_threshold=400, input_directory="", protocol="http")
 
 
 #################################### helper functions #################################### 
@@ -264,6 +271,15 @@ median_centering <- function(df, LOG2.names) {
   return(df)
 }
 
+normalization_func <- function(df, LOG2.names, method){
+  if (method == "trimMean"){
+    df[, LOG2.names] <- normalizeThis(dat = df[, LOG2.names], method = method, trimFa = 0.4)
+  } else if (method != "trimMean"){
+    df[, LOG2.names] <- normalizeThis(dat = df[, LOG2.names], method = method)
+  }
+  return(df)
+}
+
 
 
 ##################################################################################
@@ -357,6 +373,29 @@ histogram <- function(df, colname, color, title){
   
 }
 
+scatterplot_function <- function(df, colname1, colname2){
+  corr_plot <- ggplot(df, aes(df[,colname1], df[,colname2])) +
+    geom_point() +
+    theme_minimal() +
+    labs(y = colname2, x = colname1)
+  
+  ggMarginal(corr_plot, type = "densigram")
+  
+}
+
+qqplot_function <- function(df, colname1, colname2, color){
+
+  p <- data.frame(qqnorm(x = df[,colname1], y = df[,colname2]))
+  ggplot(p, aes(x, y)) +
+    geom_point(pch = 21,
+               colour = color) +
+    theme_minimal() +
+    geom_qq_line(aes(sample = y)) +
+    ylab("Sample dist") +
+    xlab("Theoretical dist") + 
+    ggtitle("Q-Q plot")
+}
+
 ##################################################################################
 #Differential expression analysis
 ##################################################################################
@@ -407,7 +446,7 @@ statistical_analysis <- function(df, LOG2.names,test, paired = FALSE, replicas_c
     fit <- lmFit(dat, design)
     fit.eb <- eBayes(fit)
     print(colnames(fit.eb))
-    logFC <- fit.eb$coefficients[, 2] #C?lculo del log fold-change
+    logFC <- fit.eb$coefficients[, 2] #Calculo del log fold-change
     p.value <- fit.eb$p.value[, 2]    # p-valor moderado correspondiente al estad?stico t moderado.
     adj.P.Val <- p.adjust(p.value, method = adjval)
     
@@ -768,7 +807,7 @@ Goterms_finder <- function(df, target, numeric_ns, mthreshold, filter_na, organi
 
 dotplot_func <- function(terms, ...){
   
-  dotplot(terms[[1]],  ...)
+  dotplot(terms[[1]],  ...) +  facet_grid(.~Conditions)
   
 }
 
@@ -787,8 +826,11 @@ barplot_func <- function(terms, conditions, ...){
 ##################################################################################
 #Interaction network analysis
 
-interactions_up <- function(df){
+interactions_up <- function(df, taxonid, score){
   #Subset de up-regulated y down-regulated
+  string_db <- STRINGdb$new(version="11.5", species=taxonid, score_threshold=score, input_directory="", protocol="http")
+  
+  
   
   up_regulated <- subset(df, df$expression == "Up-regulated")
   down_regulated <- subset(df, df$expression == "Down-regulated")
@@ -806,7 +848,9 @@ interactions_up <- function(df){
   
 }
 
-interactions_down <- function(df){
+interactions_down <- function(df, taxonid, score){
+  string_db <- STRINGdb$new(version="11.5", species=taxonid, score_threshold=score, input_directory="", protocol="http")
+  
   down_regulated <- subset(df, df$expression == "Down-regulated")
   
   down_mapped <- string_db$map(down_regulated, "Protein", removeUnmappedRows = TRUE)
