@@ -1,6 +1,6 @@
 
  ![Alt text](interface.gif) 
-# Label Free downstreaming analysis 
+# Label Free Downstreaming Analysis 
 En este repositorio se encuentra todo el código generado en el Trabajo Fin de Máster; Desarrollo de un flujo de trabajo en RStudio para la caracterización del papel de la proteína Prn1 en estrés oxidativo en *Candida albicans*.
 <br>
 <br>
