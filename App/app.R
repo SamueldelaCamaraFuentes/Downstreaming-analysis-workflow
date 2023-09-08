@@ -22,7 +22,7 @@ ui <- dashboardPage(
   dashboardHeader(title = "My application"),
   sidebar <- dashboardSidebar(
     
-    #Home Home_introduction
+    #Home
     conditionalPanel(condition = "input.main_tabs == 'Home_introduction'",
       sidebarMenu(menuItem('Home', icon=icon("home"), selected = TRUE, tabName = "home"))),
     
@@ -35,9 +35,19 @@ ui <- dashboardPage(
                                           multiple = FALSE, 
                                           accept = c("text/csv",
                                                      ".csv")),
+                                selectInput(inputId = "comptplatform", 
+                                            label = "Platform",
+                                            choices = list("MaxQuant" = 1, 
+                                                           "MSFragger" = 2,
+                                                           "DIA-NN" = 3),
+                                            selected = 3),
+                                selectInput(inputId = "organismfocus", 
+                                            label = "Organism",
+                                            choices = list("Candida albicans" = 1, 
+                                                           "Other" = 2),
+                                            selected = 2),
                                 actionButton( inputId = "showcolumns",
                                               label = "Show columns:"),
-                                
                                 radioButtons(inputId = "intensitymode",
                                              label = "Choose quantification",
                                              choices = c("Intensity" = "int",
@@ -84,37 +94,34 @@ ui <- dashboardPage(
                                 helpText("Note: mean, median, trimMean and vsc"),
                                 
                                 h3("Imputation"),
-                                checkboxGroupInput(inputId = "imputation",
-                                                   label = "Imputation method",
-                                                   choices = list("K Nearest Neighbors" = 1,
-                                                                  "Normal distribution" = 2),
-                                                   selected = 2),
+                                selectInput(inputId = "imputation", 
+                                            label = "Imputation method",
+                                            choices = list("K Nearest Neighbors" = 1, 
+                                                           "Normal distribution" = 2),
+                                            selected = 2),
                                 actionButton( inputId = "displaytable",
                                               label = "Display table"),
-                                checkboxGroupInput(inputId = "displayproteins",
-                                                   label = "Choose a protein set to display",
-                                                   choices = list("Common proteins between conditions" = 1,
-                                                                  "Exclusive control proteins" = 2,
-                                                                  "Exclusive treatment proteins" = 3),
-                                                   selected = 1)),
-                               
+                                selectInput(inputId = "displayproteins", 
+                                            label = "Choose a protein set to display",
+                                            choices = list("Common proteins between conditions" = 1,
+                                                           "Exclusive control proteins" = 2,
+                                                           "Exclusive treatment proteins" = 3),
+                                            selected = 1)),
                        menuItem("Venn Diagram", icon = icon("th"), tabName = "venn",
                                 strong(h4("Condition 1")),
                                 textInput(inputId = "condition1venn",
                                           label = "Control condition:",
-                                          value = "WT"),
+                                          value = "Control"),
                                 textInput(inputId = "color1",
                                           label = "Color:",
                                           value = "blue"),
                                 strong(h4("Condition 2")),
                                 textInput(inputId = "condition2venn",
                                           label = "Treatment condition:",
-                                          value = "WT with H2O2"),
+                                          value = "Treatment"),
                                 textInput(inputId = "color2",
                                           label = "Color:",
                                           value = "maroon"),
-                                actionButton( inputId = "venndiagram",
-                                              label = "Venn Diagram"),
                                 selectInput(inputId = "vennextension",
                                             label = "File type:",
                                             choices = c("tiff", "pdf", "jpeg", "png"),
@@ -161,24 +168,18 @@ ui <- dashboardPage(
                      sidebarMenu(
                        menuItem( "Quality metrics", icon = icon("chart-line"),
                                  strong(h4("Distribution plots")),
-                                 actionButton( inputId = "box",
-                                               label = "Render plot"),
-                                 checkboxGroupInput(inputId = "displaydistplots",
-                                                    label = "select a plot",
-                                                    choices = list("Boxplot" = 1,
-                                                                   "Dispersion plot" = 2),
-                                                    selected = 1),
+                                 selectInput(inputId = "displaydistplots", 
+                                             label = "Select a plot",
+                                             choices = list("Boxplot" = 1, 
+                                                           "Dispersion plot" = 2),
+                                                            selected = 1),
                                  strong(h4("Imputation plot")),
-                                 actionButton( inputId = "preimputation",
-                                               label = "Render plot"),
-                                 checkboxGroupInput(inputId = "displayimpplots",
-                                                    label = "select a plot",
-                                                    choices = list("Pre imputation" = 1,
-                                                                   "Post imputation" = 2),
-                                                    selected = 1),
+                                 selectInput(inputId = "displayimpplots", 
+                                             label = "Select a plot",
+                                             choices = list("Pre imputation" = 1, 
+                                                            "Post imputation" = 2),
+                                             selected = 1),
                                  strong(h4("Normality plots")),
-                                 actionButton( inputId = "hist",
-                                               label = "Render plot"),
                                  textInput(inputId = "histsample",
                                            label = "Sample for histogram:",
                                            value = "LOG2.WT1" ),
@@ -191,17 +192,13 @@ ui <- dashboardPage(
                                  textInput(inputId = "qqcolor",
                                            label = "Color for QQplot:",
                                            value = "blue"),
-                                 checkboxGroupInput(inputId = "displaynormplots",
-                                                    label = "select a plot",
-                                                    choices = list("Histogram" = 1,
-                                                                   "Q-Q plot" = 2),
-                                                    selected = 1),
+                                 selectInput(inputId = "displaynormplots", 
+                                             label = "Select a plot",
+                                             choices = list("Histogram" = 1, 
+                                                            "Q-Q plot" = 2),
+                                             selected = 1),
                                  strong(h4("PCA plot")),
-                                 actionButton( inputId = "pca",
-                                               label = "Render plot"),
                                  strong(h4("Correlation plots")),
-                                 actionButton( inputId = "scatterbutton",
-                                               label = "Render plot"),
                                  textInput(inputId = "scatsample1",
                                            label = "Sample1 for scatter:",
                                            value = "LOG2.WT1" ),
@@ -211,11 +208,11 @@ ui <- dashboardPage(
                                  textInput(inputId = "dispmethod",
                                            label = "Display method:",
                                            value = "shade"),
-                                 checkboxGroupInput(inputId = "displaycorrplots",
-                                                    label = "select a plot",
-                                                    choices = list("Scatter plot" = 1,
-                                                                   "Correlation plot" = 2),
-                                                    selected = 1))
+                                 selectInput(inputId = "displaycorrplots", 
+                                             label = "Select a plot",
+                                             choices = list("Scatter plot" = 1, 
+                                                            "Correlation plot" = 2),
+                                             selected = 1))
                      )),
     
     #Diferential analysis 
@@ -224,44 +221,45 @@ ui <- dashboardPage(
                        
                        menuItem( "Differential analysis", icon = icon("table"),
                                  h3("Tipe of test"),
-                                 checkboxGroupInput(inputId = "displaytest",
-                                                    label = "Choose a test to analyze:",
-                                                    choices = list("Simple t test approach" = 1,
-                                                                   "Limma approach" = 2),
-                                                    selected = 1),
-                                 checkboxGroupInput(inputId = "proteins",
-                                                    label = "Choose a way to proceed:",
-                                                    choices = list("Common proteins" = 1,
-                                                                   "All proteins" = 2),
-                                                    selected = 1),
+                                 selectInput(inputId = "displaytest", 
+                                             label = "Choose a test to analyze:",
+                                             choices = list("Simple t test approach" = 1, 
+                                                            "Limma approach" = 2),
+                                             selected = 1),
+                                 selectInput(inputId = "proteins", 
+                                             label = "Choose a way to proceed:",
+                                             choices = list("Common proteins" = 1, 
+                                                            "All protein" = 2),
+                                             selected = 1),
+                                 
                                  switchInput(inputId = "testid",
                                              label = "Test",
                                              value = FALSE,
                                              onLabel = "Paired t-test",
                                              offLabel = "Two sample t-test"),
                                  h3("Choice:"),
-                                 checkboxGroupInput(inputId = "statselected",
-                                                    label = "Select a statistic:",
-                                                    choices = list("P value" = 1,
-                                                                   "Q value" = 2),
-                                                    selected = 1),
+                                 selectInput(inputId = "statselected", 
+                                             label = "Select a statistic:",
+                                             choices = list("P value" = 1, 
+                                                            "Q value" = 2),
+                                             selected = 1),
                                  numericInput(inputId = "LogFCup",
                                               label = "Log2FC cutoff upregulated:",
-                                              value = 0.6),
+                                              value = 1.5),
                                  numericInput(inputId = "LogFCdown",
                                               label = "Log2FC cutoff downregulated:",
-                                              value = -0.6),
+                                              value = -1.5),
                                  numericInput(inputId = "sigcutoff",
                                               label = "log10(p-value) cutoff:",
                                               value = 1.3),
-                                 checkboxGroupInput(inputId = "pvaladj",
-                                                    label = "Choose a p-value adjustment:",
-                                                    choices = list("FDR" = "fdr",
-                                                                   "Bonferroni" = "bonferroni",
-                                                                   "BH" = "BH",
-                                                                   "Hochberg" = "hochberg"),
-                                                    selected = "fdr")),
-                       
+                                 selectInput(inputId = "pvaladj", 
+                                             label = "Choose a p-value adjustment:",
+                                             choices = list("FDR" = "fdr",
+                                                            "Bonferroni" = "bonferroni",
+                                                            "BH" = "BH",
+                                                            "Hochberg" = "hochberg"),
+                                             selected = "fdr")),
+                                 
                        menuItem("Download tables", icon = icon("download"), tabName = "Download",
                                 textInput(inputId = "namedownload",
                                           label = "Filename",
@@ -277,23 +275,18 @@ ui <- dashboardPage(
                      sidebarMenu(
                        menuItem( "Differential analysis plots", icon = icon("chart-area"),
                                  strong(h4("Volcano plot")),
-                                 actionButton( inputId = "volcano",
-                                               label = "Render plot"),
                                  numericInput(inputId = "labelprots",
                                               label = "Point size",
                                               value = 10),
                                  textInput(inputId = "volcanotitle",
                                            label = "Insert a title",
-                                           value = "WT vs WT_H2O2"),
+                                           value = "Control vs Treatment"),
                                  strong(h4("Heatmap")),
-                                 actionButton( inputId = "heatmap",
-                                               label = "Render plot"),
                                  textInput(inputId = "heatmaptitle",
                                            label = "Insert a title",
-                                           value = "WT vs WT_H2O2"),
-                                 strong(h4("Differential heatmap")),
-                                 actionButton( inputId = "difheatmap",
-                                               label = "Render plot")),
+                                           value = "Control vs Treatment"),
+                                 strong(h4("Differential heatmap"))
+                                 ),
                        
                        menuItem("Download plot options", icon =  icon("download"),
                                 selectInput(inputId = "difextension",
@@ -350,7 +343,7 @@ ui <- dashboardPage(
                                                label = "Render plot"),
                                  textInput(inputId = "dotplottitle",
                                            label = "Title:",
-                                           value = "WT vs WT_H2O2"),
+                                           value = "Control vs Treatment"),
                                  numericInput(inputId = "categorydotplot",
                                               label = "Number of terms to display:",
                                               value = 10),
@@ -362,7 +355,7 @@ ui <- dashboardPage(
                                                label = "Render plot"),
                                  textInput(inputId = "barplottitle",
                                            label = "Title:",
-                                           value = "WT vs WT_H2O2"),
+                                           value = "Control vs Treatment"),
                                  numericInput(inputId = "categorybarplot",
                                               label = "Number of terms to display:",
                                               value = 100),
@@ -483,6 +476,8 @@ ui <- dashboardPage(
                           fluidRow(
                             box(
                               title = "Important Updates",
+                                h4(tags$b("Data analysis:")," Generalitation for MSFragger."),
+                                h4(tags$b("Data analysis:")," Generalitation for DIA-NN."),
                                 h4(tags$b("Data handling:")," New normalization and filtering methods available."),
                                 h4(tags$b("Quality metrics:")," Scatter plot, Q-Q plot and Correlation plot implemented."),
                                 h4(tags$b("Quality metrics:"),"New compact display options for plots"),
@@ -495,8 +490,8 @@ ui <- dashboardPage(
                             
                             box(
                               title = "Overview",
-                              p(h5("This interactive web application has been developed to perform differential expression analysis with “one click”
-                                and to visualize label-free quantitative proteomic datasets preprocessed with MaxQuant, providing the user with the ability of perfoming a complete pre processing step
+                              p(h4("This interactive web application has been developed to perform differential expression analysis with “one click”
+                                and to visualize label-free quantitative proteomic datasets preprocessed with several computational platforms such us MaxQuant, MSFragger and DIA-NN, providing the user with the ability of perfoming a complete pre processing step
                                 that covers the filtering, normalization and imputation of data, information about aspects of data such us distribution, variation or correlation.
                                 The possibility of performing differential expression analysis and enrichment with visualization plots.
                                 Finally an interaction analysis using string database can be performed.")), 
@@ -508,8 +503,7 @@ ui <- dashboardPage(
                           
                             box(
                               title = "Upcoming Updates",
-                              h4(tags$b("Generalitation for every organism")),
-                              h4(tags$b("Generalitation for MSFragger")),
+                              h4(tags$b("Generalitation for every organism.")),
                               width = 12,
                               solidHeader = TRUE,
                               status = "success")
@@ -626,7 +620,7 @@ ui <- dashboardPage(
                                 plotlyOutput(outputId = "manhattanout", height = "600px")
                               ),
                               box(
-                                title = "Volcano of desired mapped proteins", width = 6, status = "primary",
+                                title = "Volcano of mapped proteins", width = 6, status = "primary",
                                 plotlyOutput(outputId = "mapprot", height = "600px")
                               )
                             )
@@ -660,16 +654,23 @@ ui <- dashboardPage(
 
 server <- function(input, output) {
   
-  
   #Data handling
   #Several reactive variables in order to plot the quality metrics plots
   
   data_quick <- reactive({
-    req(input$file) #Controls whether a file has been uploaded or not
-
-    raw <- read.delim(input$file$datapath, sep = "\t", stringsAsFactors = FALSE, colClasses = "character") 
-    df<- quick_filtering(raw, input$intensitymode)
-    return(df)
+    if (input$comptplatform == 1 | input$comptplatform == 2){
+      req(input$file) #Controls whether a file has been uploaded or not
+  
+      raw <- read.delim(input$file$datapath, sep = "\t", stringsAsFactors = FALSE, colClasses = "character") 
+      df<- quick_filtering(raw, input$intensitymode, input$comptplatform, input$organismfocus)
+      return(df)
+    } else if (input$comptplatform == 3){
+      req(input$file) #Controls whether a file has been uploaded or not
+      
+      raw <- read.delim(input$file$datapath, sep = "\t", stringsAsFactors = FALSE, colClasses = "character", check.names = FALSE) 
+      df<- quick_filtering(raw, input$intensitymode, input$comptplatform, input$organismfocus)
+      return(df)
+    }
     
   })
   
@@ -810,17 +811,13 @@ server <- function(input, output) {
 
   #Proteins identified
   output$protident <- renderPlot({
-  identify_proteins(data_quick(), cond.names())
+  try(identify_proteins(data_quick(), cond.names(), input$comptplatform), silent = TRUE)
   })
   
   #Venn plot
   output$venn <- renderPlot({
-    if (input$venndiagram == 0){
-      return(NULL)
-    } else if (input$venndiagram > 0){
-      plot(venn_diagram(data_quick(), unique(), input$condition1venn, input$condition2venn, fill_color = c(input$color1, input$color2)))}
-    
-  })
+  try(plot(venn_diagram(data_quick(), unique(), input$condition1venn, input$condition2venn, fill_color = c(input$color1, input$color2))), silent = TRUE)
+    })
   
   output$downloadvenn <- downloadHandler(
     filename = function() {
@@ -838,68 +835,51 @@ server <- function(input, output) {
   
   #Distribution plots
   output$boxplot <- renderPlot({
-    if (input$box == 0) {
-      return(NULL)
-    } else if (input$box > 0) {
-      if (input$displaydistplots == 1) {
-        boxplot <- boxplot_function(data(), cond.names(), cex.axis = 0.5)
-      } else if (input$displaydistplots == 2) {
-        plotCV2(data()[,cond.names()],  trend = TRUE, main = "Dispersion check", cex = 0.2, pch = 16, xlab="Average log-intensity", ylab=expression("Relative standard deviation"))
-      }
+    if (input$displaydistplots == 1) {
+      boxplot <- try(boxplot_function(data(), cond.names(), cex.axis = 0.5), silent = TRUE)
+    } else if (input$displaydistplots == 2) {
+      try(plotCV2(data()[,cond.names()],  trend = TRUE, main = "Dispersion check", cex = 0.2, pch = 16, xlab="Average log-intensity", ylab=expression("Relative standard deviation")), silent = TRUE)
     }
+    
   })
   
   #Imputation plots 
   
   output$preimputationplot <- renderPlot({
-    if (input$preimputation == 0) {
-      return(NULL)
-    } else if (input$preimputation > 0) {
       if (input$displayimpplots == 1) {
-        preimputation_state(data_filtered(), cond.names())
+        try(preimputation_state(data_filtered(), cond.names()), silent = TRUE)
       
     } else if (input$displayimpplots == 2) {
-      postimputation_state(data(), cond.names())
+      try(postimputation_state(data(), cond.names()), silent = TRUE)
     }
-   }
+   
   })
   
 
   #PCA
   output$pcaplot <- renderPlot({
-    if (input$pca == 0){
-      return(NULL)
-    } else if (input$pca > 0){
-      my_pca <- pca(data(),cond.names())}
-    
-    
+      try(my_pca <- pca(data(),cond.names()), silent = TRUE)
   })
   
   #Scatter plot
   output$histogram <- renderPlot({
-    if (input$hist == 0) {
-      return(NULL)
-    } else if (input$hist > 0) {
-      if (input$displaynormplots == 1) {
-        histogram(data(), input$histsample, input$histcol, input$histtitle)
-      } else if (input$displaynormplots == 2) {
-        qqplot_function(data(), input$scatsample1, input$scatsample2, input$qqcolor)
-      }
+    if (input$displaynormplots == 1) {
+      histogram(data(), input$histsample, input$histcol, input$histtitle)
+    } else if (input$displaynormplots == 2) {
+      qqplot_function(data(), input$scatsample1, input$scatsample2, input$qqcolor)
     }
+    
   })
     
   #Correlation plots
 
   output$sscatplot <- renderPlot({
-    if (input$scatterbutton == 0) {
-      return(NULL)
-    } else if (input$scatterbutton > 0) {
-      if (input$displaycorrplots == 1) {
-        scatterplot_function(data(), input$scatsample1, input$scatsample2)
-      } else if (input$displaycorrplots == 2) {
-        corrplot_function(data()[cond.names()], input$dispmethod)
-      }
+    if (input$displaycorrplots == 1) {
+      scatterplot_function(data(), input$scatsample1, input$scatsample2)
+    } else if (input$displaycorrplots == 2) {
+      corrplot_function(data()[cond.names()], input$dispmethod)
     }
+    
   })
   
   
@@ -964,11 +944,7 @@ server <- function(input, output) {
   })
   
   output$volcanoplot <- renderPlotly({
-    if (input$volcano == 0){
-      return(NULL)
-    } else if (input$volcano > 0){
       print(volcano())
-    }
   })
   
   output$downloadvolcano <- downloadHandler(
@@ -976,11 +952,31 @@ server <- function(input, output) {
       paste(input$name_download_volcano, ".", input$difextension, sep = "")
     },
     content = function(file) {
-      ggsave( file,
-              plot =  print(volcano()),
-              device = input$difextension,
-              dpi = input$difquality)
+      if (input$difextension == "tiff"){
+        tiff(file)
+        volcano <- volcano_plot(difexpression(), input$volcanotitle, input$labelprots, input$statselected)
+        dev.off()
+      } else if (input$difextension == "pdf") {
+        pdf(file)
+        volcano <- volcano_plot(difexpression(), input$volcanotitle, input$labelprots, input$statselected)
+        print(volcano)
+        dev.off()
+      } else if (input$difextension == "jpeg"){
+        jpeg(file)
+        volcano <- volcano_plot(difexpression(), input$volcanotitle, input$labelprots, input$statselected)
+        dev.off()
+      } else if (input$difextension == "png"){
+        png(file)
+        print(volcano())
+        dev.off()
+      }
     }
+  #  content = function(file) {
+   #   ggsave( file,
+    #          plot =  print(volcano()),
+     #         device = input$difextension,
+      #        dpi = input$difquality)
+   # }
   )
   
   #Heatmap
@@ -990,12 +986,7 @@ server <- function(input, output) {
   })
   
   output$heatmapplot <- renderPlot({
-    if (input$heatmap == 0){
-      return(NULL)
-    } else if (input$heatmap > 0){
       heatmap()
-    }
-    
   })
   
   output$downloadheatmap <- downloadHandler(
@@ -1033,12 +1024,7 @@ server <- function(input, output) {
   })
   
   output$difheatmapplot <- renderPlot({
-    if (input$difheatmap == 0){
-      return(NULL)
-    } else if (input$difheatmap > 0){
       diff_heatmap()
-    }
-    
   })
   
   output$downloaddifheatmap <- downloadHandler(
@@ -1096,11 +1082,8 @@ server <- function(input, output) {
   
   #Dotplot
   output$dotplotout <- renderPlot({
-    if (input$dotplot == 0){
-      return(NULL)
-    } else if (input$dotplot > 0){
-      dotplot_func(funcanalysis(), x = "GeneRatio", title = input$dotplottitle, split = "Conditions", font.size = input$fontsizedotplot, showCategory = input$categorydotplot, color = "adj.P.Val")
-    }
+    dotplot_func(funcanalysis(), x = "GeneRatio", title = input$dotplottitle, split = "Conditions", font.size = input$fontsizedotplot, showCategory = input$categorydotplot, color = "adj.P.Val")
+    
   })
   
   
@@ -1131,11 +1114,8 @@ server <- function(input, output) {
   
   #Barplot
   output$barplotout <- renderPlot({
-    if (input$barplot == 0){
-      return(NULL)
-    } else if (input$barplot > 0){
-      barplot_func(funcanalysis(), conditions = input$barplottitle, showCategory = input$categorybarplot, font.size = input$fontsizebarplot)
-    }
+    barplot_func(funcanalysis(), conditions = input$barplottitle, showCategory = input$categorybarplot, font.size = input$fontsizebarplot)
+    
   })
   
   output$downloadbarplot <- downloadHandler(
@@ -1164,6 +1144,14 @@ server <- function(input, output) {
     }
   })
   
+  #Interactive Volcano
+  #output$mapprot <- renderPlot({
+  #  if (input$volcanointeractivo == 0){
+  #    return(NULL)
+  #  } else if (input$volcanointeractivo > 0){
+  #    Second_volcano(input$GoId, funcanalysis(), difexpression(), input$volcanotitle )
+  #  }
+  #})
  
   
   

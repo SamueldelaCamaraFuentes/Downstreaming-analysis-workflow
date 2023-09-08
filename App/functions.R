@@ -72,39 +72,103 @@ library(STRINGdb)
 
 ##################################################################################
 #Quick filtering
-quick_filtering <- function(raw, input){
-  df <- raw %>%
-    filter(Potential.contaminant != "+") %>% #Nos quedamos con todos aquellos que no tengan un +
-    filter(Reverse != "+") %>% #Nos quedamos con todos aquellos que no tengan un +
-    filter(Only.identified.by.site != "+") #Nos quedamos con todos aquellos que no tengan un +
-  
-  #Obtenemos los identificadores
-  regex <- regexpr(".*(?=.CGDID)", df$Fasta.headers, perl = TRUE)
-  df$Protein <- regmatches(df$Fasta.headers, regex)
-  
-  df$Protein <- sub(" ", ";", df$Protein)
-  regex2 <- regexpr("(?<=;).*(?>[A-Z0-9])", df$Protein, perl = TRUE)
-  df$Protein <- regmatches(df$Protein, regex2)
-  
-  #Obtenemos la descripci?n proteica
-  regex3 <- regexpr("(?<=;).*(?>;|[a-z])", df$Fasta.headers, perl = TRUE)
-  df$Protein_description <- regmatches(df$Fasta.headers, regex3)
-  
-  #Hacemos la log-transformaci?n
-  if (input == "lfq"){
-    intensity_names <- grep("LFQ.intensity", colnames(df), value = TRUE)
-    df[intensity_names] <- sapply(df[intensity_names], as.numeric) #convertimos los valores en numericos
-    LOG2.names <- sub("^LFQ.intensity", "LOG2", intensity_names)
-    df[LOG2.names] <- log2(df[intensity_names])
-  } else if (input == "int"){
-    intensity_names <- grep("^Intensity", colnames(df), value = TRUE)
-    df[intensity_names] <- sapply(df[intensity_names], as.numeric) #convertimos los valores en integers
-    LOG_names <- sub("^Intensity", "LOG2", intensity_names)
-    df[LOG_names] <- log2(df[intensity_names])
+quick_filtering <- function(raw, input, platform, organism){
+  if (platform == 1){
+    df <- raw %>%
+      filter(Potential.contaminant != "+") %>% #Nos quedamos con todos aquellos que no tengan un +
+      filter(Reverse != "+") %>% #Nos quedamos con todos aquellos que no tengan un +
+      filter(Only.identified.by.site != "+") #Nos quedamos con todos aquellos que no tengan un +
     
-  }
+    #Obtenemos los identificadores
+    regex <- regexpr(".*(?=.CGDID)", df$Fasta.headers, perl = TRUE)
+    df$Protein <- regmatches(df$Fasta.headers, regex)
+    
+    df$Protein <- sub(" ", ";", df$Protein)
+    regex2 <- regexpr("(?<=;).*(?>[A-Z0-9])", df$Protein, perl = TRUE)
+    df$Protein <- regmatches(df$Protein, regex2)
+    
+    #Obtenemos la descripci?n proteica
+    regex3 <- regexpr("(?<=;).*(?>;|[a-z])", df$Fasta.headers, perl = TRUE)
+    df$Protein_description <- regmatches(df$Fasta.headers, regex3)
+    
+    #Hacemos la log-transformaci?n
+    if (input == "lfq"){
+      intensity_names <- grep("LFQ.intensity", colnames(df), value = TRUE)
+      df[intensity_names] <- sapply(df[intensity_names], as.numeric) #convertimos los valores en numericos
+      LOG2.names <- sub("^LFQ.intensity", "LOG2", intensity_names)
+      df[LOG2.names] <- log2(df[intensity_names])
+    } else if (input == "int"){
+      intensity_names <- grep("^Intensity", colnames(df), value = TRUE)
+      df[intensity_names] <- sapply(df[intensity_names], as.numeric) #convertimos los valores en integers
+      LOG_names <- sub("^Intensity", "LOG2", intensity_names)
+      df[LOG_names] <- log2(df[intensity_names])
+    }
+    return(df)
+      
+    } else if (platform == 2){
+      df <- raw 
+      
+      if (organism == 1){
+        regex <- regexpr(".*(?=.CGDID)", df$Protein.ID, perl = TRUE)
+        df$Protein <- regmatches(df$Protein.ID, regex)
+        
+        df$Protein <- sub(" ", ";", df$Protein)
+        regex2 <- regexpr("(?<=;).*(?>[A-Z0-9])", df$Protein, perl = TRUE)
+        df$Protein <- regmatches(df$Protein, regex2)
+        
+        #Obtenemos la descripci?n proteica
+        regex3 <- regexpr("(?<=;).*(?>;|[a-z])", df$Protein.ID, perl = TRUE)
+        df$Protein_description <- regmatches(df$Protein.ID, regex3) 
+        
+        colnames(df)[1] <- "Protein"
+        
+      } else if (organism == 2){
+        
+        colnames(df)[1] <- "Protein.ID"
+        colnames(df)[2] <- "Protein"
+        colnames(df)[8] <- "Protein_description"
+      }
   
-  return(df)
+      
+      if (input == "lfq"){
+        intensity_names <- grep("MaxLFQ.Intensity", colnames(df), value = TRUE)
+        df[intensity_names] <- sapply(df[intensity_names], as.numeric) #convertimos los valores en numericos
+        LOG2.names <- sub("MaxLFQ.Intensity", "LOG2", intensity_names)
+        #df[LOG2.names] <- log2(df[intensity_names])
+        df[LOG2.names] <- lapply(df[intensity_names], log2)
+      } else if (input == "int"){
+        intensity_names <- grep("[0-9].Intensity", colnames(df), value = TRUE)
+        df[intensity_names] <- sapply(df[intensity_names], as.numeric) #convertimos los valores en integers
+        LOG2.names <- sub("Intensity", "LOG2", intensity_names)
+        df[LOG2.names] <- log2(df[intensity_names])
+      }
+      return(df)
+    } else if (platform == 3){
+      df <- raw 
+      colnames(df)[3] <- "Protein"
+      colnames(df)[1] <- "Protein_description"
+      
+      intensity_columns <- grepl("\\.d", colnames(df)) #Nos quedamos con aquellas columnas que corresponden con muestras
+      intensity_columns <- colnames(df[intensity_columns])
+      
+      #Le damos un lavado 
+      new_names <- c()
+      for (i in intensity_columns){
+        new <- basename(i)
+        new_names <- c(new_names, new)
+      }
+      
+      colnames(df)[length(colnames(df)) - (length(intensity_columns)-1):length(colnames(intensity_columns))] <- new_names
+      intensity_names <- grep("\\.d", colnames(df), value = TRUE)
+      df[intensity_names] <- sapply(df[intensity_names], as.numeric) #convertimos los valores en integers
+      LOG2.names <- sub("\\.d", ".LOG2", intensity_names)
+      df[LOG2.names] <- log2(df[intensity_names])
+      
+      
+      return(df)
+    }
+  
+
 }
 
 ##################################################################################
@@ -147,15 +211,21 @@ obtain_unique_proteins <- function(df, conditions, LOG2.names, replicas_condicio
 
 ##################################################################################
 #Proteins identified
-identify_proteins <- function(raw, condi.names) {
+identify_proteins <- function(raw, condi.names, platform) {
   
   # Step 1: Initialization
   long <- length(condi.names)  # Number of conditions
   filt <- list()  # List to store filtered data frames
   
   # Step 2: Filtering and assignment
-  for (i in 1:long) {
-    filt[[i]] <- raw[raw[, condi.names[i]] > 0, ]
+  if (platform == 1 | platform == 2){
+    for (i in 1:long) {
+      filt[[i]] <- raw[raw[, condi.names[i]] > 0, ]
+    }
+  } else if (platform == 3){
+    for (i in 1:long) {
+      filt[[i]] <- raw[complete.cases(raw[, condi.names[i]]), ]
+    }
   }
   
   # Step 3: Counting proteins
@@ -164,7 +234,7 @@ identify_proteins <- function(raw, condi.names) {
   # Step 4: Visualization
   barplot(
     proteins,
-    main = "Protein identified",
+    main = "Proteins identified",
     xlab = "Samples",
     ylab = "Total proteins",
     cex.names = 0.5,
@@ -319,7 +389,7 @@ normalization_func <- function(df, LOG2.names, method){
 
 impute_data <- function(df, LOG2.names, width = 0.3, downshift = 1.8) {
   
-  impute.names <- sub("^LOG2", "impute", LOG2.names)
+  impute.names <- sub("LOG2", "impute", LOG2.names)
   
   # Create new columns indicating whether the values are imputed
   df[impute.names] <- lapply(LOG2.names, function(x) !is.finite(df[, x]))
@@ -346,7 +416,7 @@ impute_data <- function(df, LOG2.names, width = 0.3, downshift = 1.8) {
 
 impute_KNN_data <- function(df, LOG2.names, ...){
   
-  impute.names <- sub("^LOG2", "impute", LOG2.names)
+  impute.names <- sub("LOG2", "impute", LOG2.names)
   df[impute.names] <- lapply(LOG2.names, function(x) !is.finite(df[, x])) #Creamos columnas donde se ve si imputar o no
   
   #Imputaci?n
@@ -695,7 +765,7 @@ volcano_plot <- function(limma, title, label, statval){
                     color = ~expression, colors = c("green3", "gray78", "firebrick3"),
                     size = I(label))
     
-    plot <- plot %>% layout(title = "Volcano plot",
+    plot <- plot %>% layout(title = title,
                             xaxis = list(title = list(text ='Log2 Fold Change')),
                             yaxis = list(title = list(text = 'Log10 p-value')))
     
@@ -794,18 +864,17 @@ volcano_plot2 <- function(limma, title, label, statval){
 
 Second_volcano <- function(idterm, funcanalysis, limma, title){
   enrichment <- funcanalysis[[2]]@result
-  limma$interest <- "no interested"
+  limma$interest <- "No"
   # Assign the string to a variable
   
   string_var <- enrichment$geneID[enrichment$ID==idterm]
  
   # Split the string into a vector
   vector_var <- strsplit(string_var, "/")[[1]]
-  print(vector_var)
   
   for (u in seq_along(vector_var)){
     # Change the values in the "interest" column based on a condition
-    limma$interest[limma$Protein == vector_var[u]] <- "Proteins that map with the term"
+    limma$interest[limma$Protein == vector_var[u]] <- "Yes"
     
   }
   
@@ -819,13 +888,10 @@ Second_volcano <- function(idterm, funcanalysis, limma, title){
   ggplot(limma, aes(logFC, -log10(p.mod))) +
     theme_light() +
     geom_point(aes(color = interest), size = 2) +
-    scale_color_manual(values = c("gray78", "firebrick3")) +
+    scale_color_manual(values = c("No" = "gray78", "Yes" = "firebrick3")) +
     guides(colour = guide_legend(override.aes = list(size=1.5))) +
     ggtitle(title) +
-    labs(y = bquote(~-log[10]~ 'q-value'), x = bquote(~log[2]~ 'Fold Change')) 
-  
-  
-  
+    labs(y = "-log10 q-value", x = "log2 Fold Change")
 }
 
 pca <- function(x, group){
