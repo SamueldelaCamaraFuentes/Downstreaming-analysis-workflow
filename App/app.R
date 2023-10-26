@@ -11,7 +11,7 @@ library(DT)
 if(!require(BiocManager)){install.packages("BiocManager")}
 library(BiocManager)
 options(repos = BiocManager::repositories())
-setwd("E:/SAMUEL/Mi app")
+#setwd("E:/SAMUEL/Mi app")
 source("functions.R")
 options(shiny.maxRequestSize = 30*1024^2)
 
@@ -72,7 +72,7 @@ ui <- dashboardPage(
                        menuItem("Preprocessing", icon = icon("th"), tabName = "preprocessing",
                                 h4("Filtering by samples"),
                                 numericInput(inputId = "minfiltro",
-                                             label = "Minimum values for filtering per sample",
+                                             label = "Minimum values for filtering per condition",
                                              value = 0),
                                 h4("Filtering by unique peptides"),
                                 textInput(inputId = "uniquecol",
@@ -96,9 +96,10 @@ ui <- dashboardPage(
                                 h3("Imputation"),
                                 selectInput(inputId = "imputation", 
                                             label = "Imputation method",
-                                            choices = list("K Nearest Neighbors" = 1, 
+                                            choices = list("No imputation" = 3,
+                                                           "K Nearest Neighbors" = 1, 
                                                            "Normal distribution" = 2),
-                                            selected = 2),
+                                            selected = 3),
                                 actionButton( inputId = "displaytable",
                                               label = "Display table"),
                                 selectInput(inputId = "displayproteins", 
@@ -124,7 +125,7 @@ ui <- dashboardPage(
                                           value = "maroon"),
                                 selectInput(inputId = "vennextension",
                                             label = "File type:",
-                                            choices = c("tiff", "pdf", "jpeg", "png"),
+                                            choices = c("tiff", "jpeg", "png"),
                                             selected = "pdf"),
                                 selectInput(inputId = "vennquality",
                                             label = "Quality:",
@@ -143,7 +144,7 @@ ui <- dashboardPage(
                        
                        menuItem("Download tables", icon = icon("download"), tabName = "Download",
                                 textInput(inputId = "filenamedownloadcomm",
-                                          label = "Filename common proteins",
+                                          label = "Filename proteins",
                                           value = "data"),
                                 downloadButton(outputId = "downloaddfcomm", icon("download"),
                                                label = "Download",
@@ -154,8 +155,8 @@ ui <- dashboardPage(
                                 downloadButton(outputId = "downloaddfcontroluniques", icon("download"),
                                                label = "Download",
                                                style="display: block; margin: 0 auto; width: 200px; color:black;"),
-                                textInput(inputId = "filenamedownloadtreatmentuiques",
-                                          label = "Filename treatment uniques proteins",
+                                textInput(inputId = "filenamedownloadtreatmentuniques",
+                                          label = "Filename treatment unique proteins",
                                           value = "data"),
                                 downloadButton(outputId = "downloaddftreatmentuniques", icon("download"),
                                                label = "Download",
@@ -212,7 +213,37 @@ ui <- dashboardPage(
                                              label = "Select a plot",
                                              choices = list("Scatter plot" = 1, 
                                                             "Correlation plot" = 2),
-                                             selected = 1))
+                                             selected = 1)),
+                       menuItem("Download plots", icon = icon("download"), tabName = "Download",
+                       strong(h4("Quality metrics download")),
+                       selectInput(inputId = "qualitymetricsplotchoice", 
+                                   label = "Select a plot",
+                                   choices = list("Boxplot" = 1, 
+                                                  "Dispersion plot" = 2,
+                                                  "Pre imputation" = 3,
+                                                  "Post imputation" = 4,
+                                                  "Histogram" = 5,
+                                                  "Q-Q plot" = 6,
+                                                  "Scatter plot" = 7,
+                                                  "Correlation plot" = 8,
+                                                  "PCA" = 9),
+                                    selected = 1),
+                       selectInput(inputId = "qmetricsextension",
+                                   label = "File type:",
+                                   choices = c("tiff", "pdf", "jpeg", "png"),
+                                   selected = "pdf"),
+                       selectInput(inputId = "qmetricsquality",
+                                   label = "Quality:",
+                                   choices = c("High" = "retina",
+                                               "Medium" = "print",
+                                               "low" = "screen"),
+                                   selected = ""),
+                       textInput(inputId = "qualitymetricsfilename",
+                                 label = "Filename",
+                                 value = "quality metrics plot"),
+                       downloadButton(outputId = "downloadqmplot", icon("download"),
+                                      label = "Download",
+                                      style="display: block; margin: 0 auto; width: 200px; color:black;"))
                      )),
     
     #Diferential analysis 
@@ -251,7 +282,7 @@ ui <- dashboardPage(
                                               value = -1.5),
                                  numericInput(inputId = "sigcutoff",
                                               label = "log10(p-value) cutoff:",
-                                              value = 1.3),
+                                              value = 0.05),
                                  selectInput(inputId = "pvaladj", 
                                              label = "Choose a p-value adjustment:",
                                              choices = list("FDR" = "fdr",
@@ -280,11 +311,11 @@ ui <- dashboardPage(
                                               value = 10),
                                  textInput(inputId = "volcanotitle",
                                            label = "Insert a title",
-                                           value = "Control vs Treatment"),
+                                           value = "Treatment vs Control"),
                                  strong(h4("Heatmap")),
                                  textInput(inputId = "heatmaptitle",
                                            label = "Insert a title",
-                                           value = "Control vs Treatment"),
+                                           value = "Treatment vs Control"),
                                  strong(h4("Differential heatmap"))
                                  ),
                        
@@ -339,11 +370,9 @@ ui <- dashboardPage(
                        ),
                        menuItem( "Plots", icon = icon("chart-area"),
                                  strong(h4("Dotplot")),
-                                 actionButton( inputId = "dotplot",
-                                               label = "Render plot"),
                                  textInput(inputId = "dotplottitle",
                                            label = "Title:",
-                                           value = "Control vs Treatment"),
+                                           value = "Treatment vs Control"),
                                  numericInput(inputId = "categorydotplot",
                                               label = "Number of terms to display:",
                                               value = 10),
@@ -351,11 +380,9 @@ ui <- dashboardPage(
                                               label = "Font size:",
                                               value = 10),
                                  strong(h4("Barplot")),
-                                 actionButton( inputId = "barplot",
-                                               label = "Render plot"),
                                  textInput(inputId = "barplottitle",
                                            label = "Title:",
-                                           value = "Control vs Treatment"),
+                                           value = "Treatment vs Control"),
                                  numericInput(inputId = "categorybarplot",
                                               label = "Number of terms to display:",
                                               value = 100),
@@ -365,19 +392,6 @@ ui <- dashboardPage(
                                  strong(h4("Manhattan plot")),
                                  actionButton( inputId = "manhattan",
                                                label = "Render plot")
-                       ),
-                       menuItem("Highlight", icon = icon("chart-area"),
-                                 strong(h4("Volcano")),
-                                 actionButton( inputId = "volcanointeractivo",
-                                              label = "Render plot"),
-                                 textInput(inputId = "GoId",
-                                           label = "Go term:",
-                                           value = "GO:0015680"),
-                                 switchInput(inputId = "updownreg",
-                                            label = "Type",
-                                            value = FALSE,
-                                            onLabel = "Up",
-                                            offLabel = "Down")
                        ),
                        
                        menuItem("Download plot options", icon = icon("download"),
@@ -458,6 +472,10 @@ ui <- dashboardPage(
                                 downloadButton(outputId = "downloaddownnetwork",
                                                label = "Download",
                                                icon = icon("download"),
+                                               style="display: block; margin: 0 auto; width: 200px; color:black;"),
+                                downloadButton(outputId = "downloadreport",
+                                               label = "Download",
+                                               icon = icon("download"),
                                                style="display: block; margin: 0 auto; width: 200px; color:black;"))
                      ))
   ),
@@ -503,7 +521,7 @@ ui <- dashboardPage(
                           
                             box(
                               title = "Upcoming Updates",
-                              h4(tags$b("Generalitation for every organism.")),
+                              h4(tags$b("Generalitation for Proteome Discoverer.")),
                               width = 12,
                               solidHeader = TRUE,
                               status = "success")
@@ -569,7 +587,7 @@ ui <- dashboardPage(
                          fluidPage(
                            fluidRow(
                              infoBoxOutput("significantBox_dm",width = 4),
-                             column( width = 10, DT::dataTableOutput("limma"))
+                             column( width = 12, DT::dataTableOutput("limma"))
                            )
                          )),
                 
@@ -619,10 +637,6 @@ ui <- dashboardPage(
                                 title = "Manhattan plot", width = 6, status = "primary",
                                 plotlyOutput(outputId = "manhattanout", height = "600px")
                               ),
-                              box(
-                                title = "Volcano of mapped proteins", width = 6, status = "primary",
-                                plotlyOutput(outputId = "mapprot", height = "600px")
-                              )
                             )
                           )),
                 
@@ -732,9 +746,17 @@ server <- function(input, output) {
       df.FNI <- impute_KNN_data(as.data.frame(df.F), LOG2.names(), k = 5)
     } else if (input$imputation == 2){
       df.FNI <- impute_data(as.data.frame(df.F), LOG2.names())
+    } else if (input$imputation == 3){
+      df.FNI <- df.F
     }
     return(df.FNI)
     
+  })
+  
+  total_dataset <- reactive({
+    total <- bind_rows(data(), unique_control())
+    total_total <- bind_rows(total, unique_treatment())
+    return(total_total)
   })
     
   
@@ -774,14 +796,14 @@ server <- function(input, output) {
       paste(input$filenamedownloadcomm, Sys.Date(), ".txt", sep = "")
     },
     content = function(file) {
-      write.csv(data(), file)
+      write.csv(total_dataset(), file)
     }
   )
   
   output$downloaddfcontroluniques <- downloadHandler(
     
     filename = function() {
-      paste(input$filenamedownloadontroluniques, Sys.Date(), ".txt", sep = "")
+      paste(input$filenamedownloadcontroluniques, Sys.Date(), ".txt", sep = "")
     },
     content = function(file) {
       write.csv(unique_control(), file)
@@ -800,23 +822,30 @@ server <- function(input, output) {
   
   
   output$LOG2.names <- renderTable({
-    if (input$showcolumns == 0){
-      return(NULL)
-    } else if (input$showcolumns > 0){
-      LOG2.names <- obtain_LOG.names(data_quick())
-      return(LOG2.names())}
+    LOG2.names <- obtain_LOG.names(data_quick())
+   
   }, striped = TRUE, align = "c", bordered = TRUE)
   
   
 
   #Proteins identified
+  proteins_identified <- reactive({
+    identify_proteins(data_quick(), cond.names(), input$comptplatform, input$repcond1, input$repcond2)
+    
+  })
+  
   output$protident <- renderPlot({
-  try(identify_proteins(data_quick(), cond.names(), input$comptplatform), silent = TRUE)
+  try(proteins_identified(), silent = TRUE)
   })
   
   #Venn plot
+  
+  venn_diagram_plot <- reactive({
+    grid.draw(venn_diagram(data_quick(), unique(), input$condition1venn, input$condition2venn, input$color1, input$color2))
+    
+  })
   output$venn <- renderPlot({
-  try(plot(venn_diagram(data_quick(), unique(), input$condition1venn, input$condition2venn, fill_color = c(input$color1, input$color2))), silent = TRUE)
+  try(venn_diagram_plot(), silent = TRUE)
     })
   
   output$downloadvenn <- downloadHandler(
@@ -824,19 +853,24 @@ server <- function(input, output) {
       paste(input$venn_name, ".", input$vennextension, sep = "")
     },
     content = function(file) {
-      ggsave( file,
-              plot =  plot(venn_diagram(data_quick(), unique(), input$condition1venn, input$condition2venn, fill_color = c(input$color1, input$color2))),
-              device = input$vennextension,
-              dpi = input$vennquality)
+      
+      tiff(file)
+      grid.draw(venn_diagram(data_quick(), unique(), input$condition1venn, input$condition2venn, input$color1, input$color2))
+      dev.off()
     }
   )
   
   #Quality metrics 
   
   #Distribution plots
+  boxplot_distribution <- reactive({
+    boxplot_function(data(), cond.names(), cex.axis = 0.5)
+    
+  })
+  
   output$boxplot <- renderPlot({
     if (input$displaydistplots == 1) {
-      boxplot <- try(boxplot_function(data(), cond.names(), cex.axis = 0.5), silent = TRUE)
+      boxplot <- try(boxplot_distribution(), silent = TRUE)
     } else if (input$displaydistplots == 2) {
       try(plotCV2(data()[,cond.names()],  trend = TRUE, main = "Dispersion check", cex = 0.2, pch = 16, xlab="Average log-intensity", ylab=expression("Relative standard deviation")), silent = TRUE)
     }
@@ -844,10 +878,13 @@ server <- function(input, output) {
   })
   
   #Imputation plots 
+  pre_imp_plot <- reactive({
+    preimputation_state(data_filtered(), cond.names())
+  })
   
   output$preimputationplot <- renderPlot({
       if (input$displayimpplots == 1) {
-        try(preimputation_state(data_filtered(), cond.names()), silent = TRUE)
+        try(pre_imp_plot(), silent = TRUE)
       
     } else if (input$displayimpplots == 2) {
       try(postimputation_state(data(), cond.names()), silent = TRUE)
@@ -857,11 +894,21 @@ server <- function(input, output) {
   
 
   #PCA
+  PC_Analysis <- reactive({
+    my_pca <- pca(data(),cond.names())
+  })
+  
   output$pcaplot <- renderPlot({
-      try(my_pca <- pca(data(),cond.names()), silent = TRUE)
+      try(PC_Analysis(), silent = TRUE)
   })
   
   #Scatter plot
+  
+  correlation_plot <- reactive({
+    corrplot_function(data()[cond.names()], input$dispmethod)
+  
+  })
+  
   output$histogram <- renderPlot({
     if (input$displaynormplots == 1) {
       histogram(data(), input$histsample, input$histcol, input$histtitle)
@@ -877,10 +924,85 @@ server <- function(input, output) {
     if (input$displaycorrplots == 1) {
       scatterplot_function(data(), input$scatsample1, input$scatsample2)
     } else if (input$displaycorrplots == 2) {
-      corrplot_function(data()[cond.names()], input$dispmethod)
+      correlation_plot()
     }
     
   })
+  
+  output$downloadqmplot <- downloadHandler(
+    filename = function() {
+      paste(input$qualitymetricsfilename, ".", input$qmetricsextension, sep = "")
+    },
+    content = function(file) {
+      if (input$qualitymetricsplotchoice == 1) {
+        ggsave(
+          file,
+          plot = boxplot_function(data(), cond.names(), cex.axis = 0.5),
+          device = input$qmetricsextension,
+          dpi = input$qmetricsquality
+        )
+      } else if (input$qualitymetricsplotchoice == 2) {  
+        ggsave(
+          file,
+          plot = plotCV2(
+            data()[, cond.names()],
+            trend = TRUE,
+            main = "Dispersion check",
+            cex = 0.2,
+            pch = 16,
+            xlab = "Average log-intensity",
+            ylab = expression("Relative standard deviation")
+          ),
+          device = input$qmetricsextension,
+          dpi = input$qmetricsquality
+        )
+      } else if (input$qualitymetricsplotchoice == 3) {
+        ggsave(
+          file,
+          plot = preimputation_state(data_filtered(), cond.names()),
+          device = input$qmetricsextension,
+          dpi = input$qmetricsquality
+        )
+      } else if (input$qualitymetricsplotchoice == 4) {
+        ggsave(
+          file,
+          plot = postimputation_state(data(), cond.names()),
+          device = input$qmetricsextension,
+          dpi = input$qmetricsquality
+        )
+      } else if (input$qualitymetricsplotchoice == 5) {
+        ggsave(
+          file,
+          plot = histogram(data(), input$histsample, input$histcol, input$histtitle),
+          device = input$qmetricsextension,
+          dpi = input$qmetricsquality
+        )
+      } else if (input$qualitymetricsplotchoice == 6) {
+        ggsave(
+          file,
+          plot = qqplot_function(data(), input$scatsample1, input$scatsample2, input$qqcolor),
+          device = input$qmetricsextension,
+          dpi = input$qmetricsquality
+        )
+      } else if (input$qualitymetricsplotchoice == 7) {
+        ggsave(
+          file,
+          plot = scatterplot_function(data(), input$scatsample1, input$scatsample2),
+          device = input$qmetricsextension,
+          dpi = input$qmetricsquality
+        )
+      } else if (input$qualitymetricsplotchoice == 8) {
+        ggsave(
+          file,
+          plot = correlation_plot(),
+          device = input$qmetricsextension,
+          dpi = input$qmetricsquality
+        )
+      }
+    }
+  )
+  
+  
   
   
   #Differential expression
@@ -889,8 +1011,24 @@ server <- function(input, output) {
     validate(need(!is.null(input$pvaladj),
                   "Please select an option"))
     statistic_dataframe <- statistical_analysis(data(), LOG2.names(), input$displaytest, input$testid, input$repcond1, input$repcond2, input$condition1, input$condition2, input$LogFCup, input$LogFCdown, input$sigcutoff, input$pvaladj, input$statselected, unique(), input$proteins)
-    return(statistic_dataframe)
     
+    statistic_dataframe <- statistic_dataframe[-6]
+    merged <- merge(total_dataset(), statistic_dataframe, by = "Protein")
+    
+    merged <- merged %>%
+     select("Protein", "Protein_description", "logFC", "p.value", "adj.P.Val", "expression", everything())
+    
+    merged <- merged[order(merged$expression),]
+    row.names(merged) <- merged$Protein
+    
+    
+    return(merged)
+    
+  })
+  
+  result.all <- reactive({
+    result <- merge(data(), difexpression(), by = "Protein")
+    return(result)
   })
   
  
@@ -927,10 +1065,10 @@ server <- function(input, output) {
   
   output$downloaddif <- downloadHandler(
     filename = function() {
-      paste(input$namedownload, Sys.Date(), ".csv", sep = "")
+      paste(input$namedownload, Sys.Date(), ".xlsx", sep = "")
     },
     content = function(file) {
-      write.csv(difexpression(), file)
+      writexl::write_xlsx(difexpression(), file)
     }
     
   )
@@ -952,31 +1090,11 @@ server <- function(input, output) {
       paste(input$name_download_volcano, ".", input$difextension, sep = "")
     },
     content = function(file) {
-      if (input$difextension == "tiff"){
-        tiff(file)
-        volcano <- volcano_plot(difexpression(), input$volcanotitle, input$labelprots, input$statselected)
-        dev.off()
-      } else if (input$difextension == "pdf") {
-        pdf(file)
-        volcano <- volcano_plot(difexpression(), input$volcanotitle, input$labelprots, input$statselected)
-        print(volcano)
-        dev.off()
-      } else if (input$difextension == "jpeg"){
-        jpeg(file)
-        volcano <- volcano_plot(difexpression(), input$volcanotitle, input$labelprots, input$statselected)
-        dev.off()
-      } else if (input$difextension == "png"){
-        png(file)
-        print(volcano())
-        dev.off()
-      }
+      save_image(p = volcano_plot(difexpression(), input$volcanotitle, input$labelprots, input$statselected),
+                 file = filename)
     }
-  #  content = function(file) {
-   #   ggsave( file,
-    #          plot =  print(volcano()),
-     #         device = input$difextension,
-      #        dpi = input$difquality)
-   # }
+   
+
   )
   
   #Heatmap
@@ -1073,17 +1191,22 @@ server <- function(input, output) {
   
   output$downloadfunc <- downloadHandler(
     filename = function() {
-      paste(input$name_download, Sys.Date(), ".csv", sep = "")
+      paste(input$name_download, Sys.Date(), ".xlsx", sep = "")
     },
     content = function(file) {
-      write.csv(funcanalysis()[[2]]@result, file)
+      writexl::write_xlsx(funcanalysis()[[2]]@result, file)
+      
     }
   )
   
   #Dotplot
-  output$dotplotout <- renderPlot({
+  dotplot_react <- reactive({
     dotplot_func(funcanalysis(), x = "GeneRatio", title = input$dotplottitle, split = "Conditions", font.size = input$fontsizedotplot, showCategory = input$categorydotplot, color = "adj.P.Val")
     
+  })
+  
+  output$dotplotout <- renderPlot({
+    dotplot_react()
   })
   
   
@@ -1092,31 +1215,22 @@ server <- function(input, output) {
       paste(input$name_download_func, ".", input$funcextension, sep = "")
     },
     content = function(file) {
-      if (input$funcextension == "tiff"){
-        tiff(file)
-        dotplot_func(funcanalysis(), x = "Conditions", title = input$dotplottitle, font.size = input$fontsizedotplot, showCategory = input$categorydotplot, color = "adj.P.Val")
-        dev.off()
-      } else if (input$funcextension == "pdf") {
-        pdf(file)
-        dotplot_func(funcanalysis(), x = "Conditions", title = input$dotplottitle, font.size = input$fontsizedotplot, showCategory = input$categorydotplot, color = "adj.P.Val")
-        dev.off()
-      } else if (input$funcextension == "jpeg"){
-        jpeg(file)
-        dotplot_func(funcanalysis(), x = "Conditions", title = input$dotplottitle, font.size = input$fontsizedotplot, showCategory = input$categorydotplot, color = "adj.P.Val")
-        dev.off()
-      } else if (input$funcextension == "png"){
-        png(file)
-        dotplot_func(funcanalysis(), x = "Conditions", title = input$dotplottitle, font.size = input$fontsizedotplot, showCategory = input$categorydotplot, color = "adj.P.Val")
-        dev.off()
-      }
+      ggsave( file,
+              plot = dotplot_func(funcanalysis(), x = "GeneRatio", title = input$dotplottitle, split = "Conditions", font.size = input$fontsizedotplot, showCategory = input$categorydotplot, color = "adj.P.Val"),
+              device = input$funcextension,
+              dpi = input$funcquality)
     }
   )
   
   #Barplot
-  output$barplotout <- renderPlot({
+  barplot_react <- reactive({
     barplot_func(funcanalysis(), conditions = input$barplottitle, showCategory = input$categorybarplot, font.size = input$fontsizebarplot)
-    
   })
+  
+  output$barplotout <- renderPlot({
+    barplot_react()
+  })
+  
   
   output$downloadbarplot <- downloadHandler(
     filename = function() {
@@ -1143,17 +1257,6 @@ server <- function(input, output) {
       manhattan()
     }
   })
-  
-  #Interactive Volcano
-  #output$mapprot <- renderPlot({
-  #  if (input$volcanointeractivo == 0){
-  #    return(NULL)
-  #  } else if (input$volcanointeractivo > 0){
-  #    Second_volcano(input$GoId, funcanalysis(), difexpression(), input$volcanotitle )
-  #  }
-  #})
- 
-  
   
   #Interaction analysis
   
@@ -1259,7 +1362,52 @@ server <- function(input, output) {
     
   })
   
+  ##### ====== Download report ====== #####
+  
+  output$downloadReport <- downloadHandler(
+    # For PDF output, change this to "report.pdf"
+    filename = "Analysis_report.pdf",
+    content = function(file) {
+      # Copy the report file to a temporary directory before processing it, in
+      # case we don't have write permissions to the current working dir (which
+      # can happen when deployed).
+      tempReport <- file.path(tempdir(), "Downstreaming_Analysis_report.Rmd")
+      file.copy("Downstreaming_Analysis_report.Rmd", tempReport, overwrite = TRUE)
+      
+      # Set up parameters to pass to Rmd document
+      params <- list(
+        venn = venn_diagram_plot(),
+        proteins = proteins_identified(),
+        boxplot = boxplot_distribution(),
+        imputation = pre_imp_plot(),
+        pca = PC_Analysis(),
+        corrplot = correlation_plot(),
+        volcano = volcano(),
+        heatmap = heatmap(),
+        dotplot = dotplot_react(),
+        barplot = barplot_react(),
+        control_replicates = input$repcond1,
+        treatment_replicates = input$repcond2,
+        type_of_test = input$testid,
+        log2FC_up = input$LogFCup,
+        log2FC_down = input$LogFCdown,
+        pvalue = input$sigcutoff,
+        organism = input$organism,
+        p_value_for_enrichment = input$userthreshold,
+        taxon_id = input$taxonid,
+        score_threshold = input$scthreshold,
+      )
+      
+      # Knit the document, passing in the `params` list
+      rmarkdown::render(tempReport, output_file = file,
+                        params = params,
+                        envir = new.env(parent = globalenv())
+      )
+    }
+  )
+  
 
 }
 
 shinyApp(ui, server)
+
