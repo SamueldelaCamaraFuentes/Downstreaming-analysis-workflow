@@ -1,29 +1,28 @@
 Goterms_finder <- function(df, target, numeric_ns, mthreshold, filter_na, organismo, ...){
-  
+    #@ df es el dataframe que es la salida de limma.
   up <- bind_rows(
     df %>% 
       filter(df$expression == 'Up-regulated') %>% 
-      arrange(p.mod) 
+      arrange(p.value) 
   )
-  up <- subset(up, up$p.mod <= 0.05)
+  #up <- subset(up, up$p.value <= 0.05)
   
   down <- bind_rows(
     df %>% 
       filter(df$expression == 'Down-regulated') %>% 
-      arrange(p.mod) 
+      arrange(p.value) 
   )
-  down <- subset(down, down$p.mod <= 0.05)
+  #down <- subset(down, down$p.value <= 0.05)
   
-  #Afianzamos la obtención de los identificadores de nuestras proteínas a ensemblegenome
-  up_names <- gconvert(up$Protein, organism = "calbicans",  target, numeric_ns, mthreshold, filter_na)
-  down_names <- gconvert(down$Protein, organism = "calbicans",  target, numeric_ns, mthreshold, filter_na)
+  #Afianzamos la obtenci?n de los identificadores de nuestras prote?nas a ensemblegenome
+  up_names <- gconvert(up$Protein, organism = organismo,  target, numeric_ns, mthreshold, filter_na)
+  down_names <- gconvert(down$Protein, organism = organismo,  target, numeric_ns, mthreshold, filter_na)
   
   #Multi enrichment analysis
   
   multi_gp <- gost(list("up-regulated" = up_names$name, "down-regulated" = down_names$name), organism = organismo, ...)
   multi_gp[[1]]$adj.P.Val <- p.adjust(multi_gp[[1]]$p_value, method = "fdr")
-  # modify the g:Profiler data frame
-  gp_mod <- multi_gp$result[, c("query", "source", "term_id",   #Se extraen las columnas de interés
+  gp_mod <- multi_gp$result[, c("query", "source", "term_id",   #Se extraen las columnas de inter?s
                                 "term_name", "p_value","adj.P.Val", "query_size",
                                 "intersection_size" , "term_size",
                                 "effective_domain_size", "intersection")]
@@ -42,7 +41,7 @@ Goterms_finder <- function(df, target, numeric_ns, mthreshold, filter_na, organi
   
   # definimos objeto compareCluster
   gp_mod_cluster <- new("compareClusterResult", compareClusterResult = gp_mod2)
-  # dedinimos objeto enrichResult
+  # definimos objeto enrichResult
   gp_mod_enrich <- new("enrichResult", result = gp_mod2) 
   
   go_structures <- list(gp_mod_cluster, gp_mod_enrich, multi_gp)
@@ -52,10 +51,7 @@ Goterms_finder <- function(df, target, numeric_ns, mthreshold, filter_na, organi
 
 dotplot_func <- function(Go_terms, ...){
   
-  filename = "Dotplot of Go terms.tiff"
-  tiff(filename = filename, units="in", width=9, height=9, res=300)
-  dotplot(Go_terms[[1]],  ...)
-  dev.off()
+  dotplot(Go_terms[[1]],  ...) +  facet_grid(.~Conditions)
 }
 
 gostplot_func <- function(terms, ...){
@@ -64,9 +60,20 @@ gostplot_func <- function(terms, ...){
   
 }
 
-barplot_func <- function(terms, conditions, ...){
-  barplot(terms[[2]], ...) + 
+barplot_func <- function(terms, number, conditions, ...){
+  
+  
+  terms[[2]]@result <- terms[[2]]@result[order(terms[[2]]@result$Count, decreasing = TRUE), ]
+  
+  #terms_display <- number * 2
+  
+  
+  up_regulated_subset <- terms[[2]]@result[terms[[2]]@result$Conditions == "Up-regulated", ][1:number,]
+  down_regulated_subset <- terms[[2]]@result[terms[[2]]@result$Conditions == "Down-regulated", ][1:number,]
+  terms[[2]]@result <- rbind(up_regulated_subset, down_regulated_subset)
+  
+  
+  barplot(terms[[2]], showCategory = 100, ...) + 
     ggplot2::facet_grid(~Cluster) + ggplot2::ylab("Number of proteins") +ggtitle(conditions)
   
-  ggsave("barplot.tiff", units="in", width=7, height=7, dpi=300)
 }
