@@ -11,7 +11,7 @@ library(DT)
 if(!require(BiocManager)){install.packages("BiocManager")}
 library(BiocManager)
 options(repos = BiocManager::repositories())
-#setwd("E:/SAMUEL/Mi app")
+setwd("E:/SAMUEL/Mi app")
 source("functions.R")
 options(shiny.maxRequestSize = 30*1024^2)
 
@@ -41,13 +41,16 @@ ui <- dashboardPage(
                                                            "MSFragger" = 2,
                                                            "DIA-NN" = 3),
                                             selected = 3),
+                                selectInput(inputId = "labeltype", 
+                                            label = "Type",
+                                            choices = list("Label free" = 1, 
+                                                           "TMT" = 2),
+                                            selected = 1),
                                 selectInput(inputId = "organismfocus", 
                                             label = "Organism",
                                             choices = list("Candida albicans" = 1, 
                                                            "Other" = 2),
                                             selected = 2),
-                                actionButton( inputId = "showcolumns",
-                                              label = "Show columns:"),
                                 radioButtons(inputId = "intensitymode",
                                              label = "Choose quantification",
                                              choices = c("Intensity" = "int",
@@ -56,11 +59,11 @@ ui <- dashboardPage(
                                 
                                 textInput(inputId = "condition1",
                                           label = "Control condition",
-                                          value = "WT[0-9]"),
+                                          value = "Regexp condition 1"),
                                 
                                 textInput(inputId = "condition2",
                                           label = "Treatment condition",
-                                          value = "WT_H2O2"),
+                                          value = "Regexp condition 2"),
                                 
                                 numericInput(inputId = "repcond1",
                                              label = "Control replicates",
@@ -378,17 +381,17 @@ ui <- dashboardPage(
                                               value = 10),
                                  numericInput(inputId = "fontsizedotplot",
                                               label = "Font size:",
-                                              value = 10),
+                                              value = 16),
                                  strong(h4("Barplot")),
                                  textInput(inputId = "barplottitle",
                                            label = "Title:",
                                            value = "Treatment vs Control"),
                                  numericInput(inputId = "categorybarplot",
                                               label = "Number of terms to display:",
-                                              value = 100),
+                                              value = 10),
                                  numericInput(inputId = "fontsizebarplot",
                                               label = "Font size:",
-                                              value = 5),
+                                              value = 10),
                                  strong(h4("Manhattan plot")),
                                  actionButton( inputId = "manhattan",
                                                label = "Render plot")
@@ -723,7 +726,7 @@ server <- function(input, output) {
     
     conditions <- c(input$condition1, input$condition2)
     min_count <- c(input$minfiltro, input$minfiltro)
-    df.F <- filter_valids(data_quick(), unique(), conditions, min_count, at_least_one <- TRUE, LOG2.names())
+    df.F <- filter_valids(data_quick(), unique(), conditions, min_count, at_least_one <- TRUE, LOG2.names(), input$labeltype)
     df.F.unique <- subset(df.F, df.F[, input$uniquecol] > input$numberuniquepep)
     return(df.F.unique)
     
@@ -895,7 +898,7 @@ server <- function(input, output) {
 
   #PCA
   PC_Analysis <- reactive({
-    my_pca <- pca(data(),cond.names())
+    my_pca <- pca(data(),cond.names(), input$repcond1, input$repcond2)
   })
   
   output$pcaplot <- renderPlot({
@@ -1224,7 +1227,7 @@ server <- function(input, output) {
   
   #Barplot
   barplot_react <- reactive({
-    barplot_func(funcanalysis(), conditions = input$barplottitle, showCategory = input$categorybarplot, font.size = input$fontsizebarplot)
+    barplot_func(funcanalysis(), input$categorybarplot, conditions = input$barplottitle, font.size = input$fontsizebarplot)
   })
   
   output$barplotout <- renderPlot({
@@ -1238,7 +1241,7 @@ server <- function(input, output) {
     },
     content = function(file) {
       ggsave( file,
-              plot =  barplot_func(funcanalysis(), conditions = input$barplottitle, showCategory = input$categorybarplot, font.size = input$fontsizebarplot),
+              plot =  barplot_func(funcanalysis(), input$categorybarplot, conditions = input$barplottitle, font.size = input$fontsizebarplot),
               device = input$funcextension,
               dpi = input$funcquality)
     }

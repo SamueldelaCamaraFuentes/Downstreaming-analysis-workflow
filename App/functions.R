@@ -283,50 +283,9 @@ venn_diagram <- function(df, unique_proteins, label1, label2, color1, color2){
 
 
 ##################################################################################
-#Functional analysis of exclusive proteins
-
-exclusive_proteins_GO <- function(unique_proteins, target, numeric_ns, mthreshold, filter_na, ...){
-  cond1_names <- gconvert(unique_proteins[[1]]$Protein, organism = "calbicans", target, numeric_ns, mthreshold, filter_na)
-  cond2_names <- gconvert(unique_proteins[[2]]$Protein, organism = "calbicans", target, numeric_ns, mthreshold, filter_na)
-  
-  #Multi enrichment analysis
-  
-  multi_gp <- gost(list("condition1" = cond1_names$name, "condition2" = cond2_names$name), ...)
-  multi_gp[[1]]$adj.P.Val <- p.adjust(multi_gp[[1]]$p_value, method = "fdr")
-  multi_gp[[1]] <- arrange(multi_gp[[1]], multi_gp[[1]]$p_value)[1:50,]
-  
-  # modify the g:Profiler data frame
-  gp_mod <- multi_gp$result[, c("query", "source", "term_id",   #Se extraen las columnas de inter?s
-                                "term_name", "p_value","adj.P.Val", "query_size",
-                                "intersection_size" , "term_size",
-                                "effective_domain_size", "intersection")]
-  gp_mod$ProteinRatio <- paste0(gp_mod$intersection_size, "/", gp_mod$query_size) #Creamos la columna GeneRatio
-  
-  gp_mod$BgRatio <- paste0(gp_mod$term_size, "/", gp_mod$effective_domain_size)#Creamos la columna BgRatio
-  names(gp_mod) <- c("Cluster", "Category", "ID", "Description", "p.adjust", "adj.P.Val",
-                     "query_size", "Count", "term_size", "effective_domain_size",
-                     "geneID", "GeneRatio", "BgRatio")
-  
-  gp_mod$geneID <- gsub(",", "/", gp_mod$geneID)
-  gp_mod$Conditions <- case_when( gp_mod$Cluster == "up-regulated" ~ "Up-regulated",
-                                  gp_mod$Cluster == "down-regulated" ~ "Down-regulated")
-  row.names(gp_mod) <- make.names(gp_mod$ID, unique = TRUE) #Utilizamos make.names para el caso de que se produzca una redundancai de identificadores
-  
-  # definimos objeto compareCluster
-  gp_mod_cluster <- new("compareClusterResult", compareClusterResult = gp_mod)
-  # dedinimos objeto enrichResult
-  gp_mod_enrich <- new("enrichResult", result = gp_mod) 
-  
-  go_structures <- list(gp_mod_cluster, gp_mod_enrich, multi_gp)
-  write_xlsx(gp_mod, paste0(newDirectory,"/plots/Analisis_funcional_proteinas_exclusivas.xlsx"))
-  return(go_structures)
-}
-
-
-##################################################################################
 #Filtering
 
-filter_valids <- function(df, unique_proteins, conditions1, min_count, at_least_one = FALSE, LOG2.names) {
+filter_valids <- function(df, unique_proteins, conditions1, min_count, at_least_one = FALSE, LOG2.names, labeltype) {
   
   
   cond.names <- lapply(conditions1, # Sobre la lista conditions, aplicamos una funcion quedarnos con las columnas de las condiciones con datos en log
@@ -341,43 +300,66 @@ filter_valids <- function(df, unique_proteins, conditions1, min_count, at_least_
       filter(common_df$Protein != i)
   }
   
-  cond.filter <- sapply(1:length(cond.names), function(i) { #En nuestro caso se itera del 1 al 2
-    df2 <- common_df[cond.names[[i]]]   # Extrae las columnas de inter?s
-    df2 <- as.matrix(df2)   # Lo convierte en matriz
-    sums <- rowSums(is.finite(df2)) # Cuenta el numero de valores validos para cada condicion 
-    sums >= min_count[i]   # Calculates whether min_count requirement is met si el n?mero de datos es igual o superior al elemento en min_count se establece true
-  })
-  if (at_least_one) {
-    common_df$KEEP <- apply(cond.filter, 1, any)
-  } else {
-    common_df$KEEP <- apply(cond.filter, 1, all)
-  }
-  common_df <- filter(common_df, KEEP)
+  if (labeltype == 1){
+    
   
-  common_df[LOG2.names] <- lapply(LOG2.names,
-                                  function(x) {
-                                    temp <- common_df[[x]]
-                                    temp[!is.finite(temp)] = NA
-                                    return(temp)
-                                    
-                                  })
-  
-  condition1_names <- cond.names[[1]] #Manejamos grupos 
-  condition2_names <- cond.names[[2]]
-  
-  for (i in 1:nrow(common_df)) { #Probar a poner el CV multiplicado por 100 al resultado y no al denominador
-    valuesA <- as.numeric(common_df[i, condition1_names])
-    valuesB <- as.numeric(common_df[i, condition2_names])
-    valuesC <- c(valuesA, valuesB)
-    cv1 <- (sd(valuesA, na.rm = TRUE) / mean(valuesA, na.rm = TRUE)) * 100
-    cv2 <- (sd(valuesB, na.rm = TRUE) / mean(valuesB, na.rm = TRUE)) * 100
-    cv3 <- (sd(valuesC, na.rm = TRUE) / mean(valuesC, na.rm = TRUE)) * 100
-    common_df$CV_Control[i] <- cv1
-    common_df$CV_Tratamiento[i] <- cv2
-    common_df$CV_TratamientoyControl[i] <- cv3
-  
+    cond.filter <- sapply(1:length(cond.names), function(i) { #En nuestro caso se itera del 1 al 2
+      df2 <- common_df[cond.names[[i]]]   # Extrae las columnas de inter?s
+      df2 <- as.matrix(df2)   # Lo convierte en matriz
+      sums <- rowSums(is.finite(df2)) # Cuenta el numero de valores validos para cada condicion 
+      sums >= min_count[i]   # Calculates whether min_count requirement is met si el n?mero de datos es igual o superior al elemento en min_count se establece true
+    })
+    if (at_least_one) {
+      common_df$KEEP <- apply(cond.filter, 1, any)
+    } else {
+      common_df$KEEP <- apply(cond.filter, 1, all)
     }
+    common_df <- filter(common_df, KEEP)
+    
+    common_df[LOG2.names] <- lapply(LOG2.names,
+                                    function(x) {
+                                      temp <- common_df[[x]]
+                                      temp[!is.finite(temp)] = NA
+                                      return(temp)
+                                      
+                                    })
+    
+    condition1_names <- cond.names[[1]] #Manejamos grupos 
+    condition2_names <- cond.names[[2]]
+    
+    for (i in 1:nrow(common_df)) { #Probar a poner el CV multiplicado por 100 al resultado y no al denominador
+      valuesA <- as.numeric(common_df[i, condition1_names])
+      valuesB <- as.numeric(common_df[i, condition2_names])
+      valuesC <- c(valuesA, valuesB)
+      cv1 <- (sd(valuesA, na.rm = TRUE) / mean(valuesA, na.rm = TRUE)) * 100
+      cv2 <- (sd(valuesB, na.rm = TRUE) / mean(valuesB, na.rm = TRUE)) * 100
+      cv3 <- (sd(valuesC, na.rm = TRUE) / mean(valuesC, na.rm = TRUE)) * 100
+      common_df$CV_Control[i] <- cv1
+      common_df$CV_Tratamiento[i] <- cv2
+      common_df$CV_TratamientoyControl[i] <- cv3
+    
+      }
   
+  } else if (labeltype ==2){
+    common_df <- df
+    common_df <- remove_missing(common_df)
+    
+    condition1_names <- cond.names[[1]] #Manejamos grupos 
+    condition2_names <- cond.names[[2]]
+    
+    for (i in 1:nrow(common_df)) { #Probar a poner el CV multiplicado por 100 al resultado y no al denominador
+      valuesA <- as.numeric(common_df[i, condition1_names])
+      valuesB <- as.numeric(common_df[i, condition2_names])
+      valuesC <- c(valuesA, valuesB)
+      cv1 <- (sd(valuesA, na.rm = TRUE) / mean(valuesA, na.rm = TRUE)) * 100
+      cv2 <- (sd(valuesB, na.rm = TRUE) / mean(valuesB, na.rm = TRUE)) * 100
+      cv3 <- (sd(valuesC, na.rm = TRUE) / mean(valuesC, na.rm = TRUE)) * 100
+      common_df$CV_Control[i] <- cv1
+      common_df$CV_Tratamiento[i] <- cv2
+      common_df$CV_TratamientoyControl[i] <- cv3
+      
+    }
+  }
   
   
   return(common_df)  
@@ -536,13 +518,14 @@ corrplot_function <- function(df, display, tl.col = "black", addCoef.col = "blac
 ##################################################################################
 #Limma function
 statistical_analysis <- function(df, LOG2.names,test, paired = FALSE, replicas_condicion1, replicas_condicion2, condition1, condition2, logfcup, logfcdown, sig, adjval, statval, unique_proteins, way){
+  
   if (test == 2){
     condition1_names <- grep(condition1, LOG2.names, value = TRUE)
     condition2_names <- grep(condition2, LOG2.names, value = TRUE)
     
     #Control columns
     for (i in 1:replicas_condicion1){
-      nam <- paste("control", i, sep = "")
+      nam <- paste("control_sample", i, sep = "")
       assign(nam, condition1_names[i])
     }  #LOG2.WT1,#LOG2.WT2,#LOG2.WT3,#LOG2.WT4
     
@@ -552,7 +535,7 @@ statistical_analysis <- function(df, LOG2.names,test, paired = FALSE, replicas_c
       assign(nam, condition2_names[i])
     }  #LOG2.WT_H2O2_1, #LOG2.WT_H2O2_2, #LOG2.WT_H2O2_3, #LOG2.WT_H2O2_4
     ct <- c()
-    for (i in ls()[grep("control", ls())]){
+    for (i in ls()[grep("control_sample", ls())]){
       new_value_control <- get(i)
       ct <- c(ct, new_value_control)
     }
@@ -744,52 +727,6 @@ statistical_analysis <- function(df, LOG2.names,test, paired = FALSE, replicas_c
 }
 
 
-#T test function
-t_test <- function(df,LOG2.names, paired = FALSE, condition1, condition2, orden, logfcup, logfcdown, sig, adjval){
-  
-  condition1_names <- grep(condition1, LOG2.names, value = TRUE)
-  condition2_names <- grep(condition2, LOG2.names, value = TRUE)
-  for (i in 1:nrow(df)) {
-    
-    valuesA <- as.numeric(df[i, c(condition1_names)])
-    valuesB <- as.numeric(df[i, c(condition2_names)])
-    testResults <- t.test(x = valuesA, y = valuesB, paired = paired)
-    
-    df$pValue[i] <- testResults$p.value
-    df$tStat[i] <- testResults$statistic
-    df$logFC[i] <- mean(valuesB, na.rm = TRUE) - mean(valuesA, na.rm = TRUE)
-    
-    proteinGroups <- data.frame(df$logFC, df$pValue, df$tStat)
-    
-    
-  }
-  colnames(proteinGroups) <- c("logFC", "p.value", "tStat")
-  proteinGroups$expression <- case_when(proteinGroups$logFC >= logfcup & -log10(proteinGroups$p.value) >= sig ~ "Up-regulated",
-                                        proteinGroups$logFC <= logfcdown & -log10(proteinGroups$p.value) >= sig ~ "Down-regulated",
-                                        TRUE ~ "Unchanged")#labels para expresion 
-  
-  proteinGroups$adj.P.Val <- p.adjust(proteinGroups$p.value, method = adjval)
-  if (orden == 1){
-    proteinGroups <- proteinGroups[order(proteinGroups$p.value), ] #Ordenamos por p.value
-  } else if (orden ==2){
-    proteinGroups <- proteinGroups[order(proteinGroups$adj.P.Val), ]
-  }
-  
-  Protein <- c()                          #Creamos un vector vac?o
-  Protein_description <- c()
-  results_rownames <- rownames(proteinGroups)
-  for (i in results_rownames){
-    new_value <- df[i, "Protein"]     #iteramos los rownames en la columna deseada
-    Protein <- c(Protein, new_value)      #Creamos la columna con identificadores
-    new_desc <- df[i, "Protein_description"]
-    Protein_description <- c(Protein_description, new_desc) #Creamos la columna con descriptores. 
-  }
-  proteinGroups$Protein <- Protein 
-  proteinGroups$Protein_description <- Protein_description
-  row.names(proteinGroups) <- proteinGroups$Protein
-  return(proteinGroups)
-}
-
 ##################################################################################
 #Plots
 
@@ -844,7 +781,7 @@ volcano_plot <- function(limma, title, label, statval){
 }
 
 
-pca <- function(x, group){
+pca <- function(x, group, rep1, rep2){
   x <- na.omit(x[group])
   tdata<-t(x[group])
   
@@ -854,9 +791,9 @@ pca <- function(x, group){
   pcContribution <- 100 * eigenValues / totalEigenValue
   contribution1 <- round(100 * eigenValues[1] / totalEigenValue)
   contribution2 <- round(100 * eigenValues[2] / totalEigenValue)
-  my_colors <- c("salmon", "blue")
+  my_colors <-  rep(c("salmon", "blue"), c(rep1, rep2))
   
-  plot(pc$x[,1], pc$x[,2], pch=16, cex = 3,  col = my_colors[sort(rep(1:(length(group)/2), length(group)/2))] , main="Principal Component Analysis", xlab=paste0("PC1 [", contribution1, "%]"), ylab=paste0("PC2 [", contribution2, "%]"))
+  plot(pc$x[,1], pc$x[,2], pch=16, cex = 3,  col = my_colors, main="Principal Component Analysis", xlab=paste0("PC1 [", contribution1, "%]"), ylab=paste0("PC2 [", contribution2, "%]"))
   text(pc$x[,1], pc$x[,2],labels=rownames(pc$x),pos=3,offset=0.4,cex=0.7)
 }
 
@@ -955,9 +892,20 @@ gostplot_func <- function(terms, ...){
   
 }
 
-barplot_func <- function(terms, conditions, ...){
+barplot_func <- function(terms, number, conditions, ...){
   
-  barplot(terms[[2]], ...) + 
+  
+  terms[[2]]@result <- terms[[2]]@result[order(terms[[2]]@result$Count, decreasing = TRUE), ]
+  
+  #terms_display <- number * 2
+  
+  
+  up_regulated_subset <- terms[[2]]@result[terms[[2]]@result$Conditions == "Up-regulated", ][1:number,]
+  down_regulated_subset <- terms[[2]]@result[terms[[2]]@result$Conditions == "Down-regulated", ][1:number,]
+  terms[[2]]@result <- rbind(up_regulated_subset, down_regulated_subset)
+  
+  
+  barplot(terms[[2]], showCategory = 100, ...) + 
     ggplot2::facet_grid(~Cluster) + ggplot2::ylab("Number of proteins") +ggtitle(conditions)
   
 }
@@ -968,8 +916,7 @@ barplot_func <- function(terms, conditions, ...){
 interactions_up <- function(df, taxonid, score){
   #Subset de up-regulated y down-regulated
   string_db <- STRINGdb$new(version="11.5", species=taxonid, score_threshold=score, input_directory="", protocol="http")
-  
-  
+
   
   up_regulated <- subset(df, df$expression == "Up-regulated")
   down_regulated <- subset(df, df$expression == "Down-regulated")
@@ -1053,5 +1000,5 @@ calculate_graph_measures <- function(subgraph, hits) {
     top_closeness_proteins = paste(top_closeness_proteins, collapse = ";")
   )
   
-  graph_analysis
+  return(graph_analysis)
 }
