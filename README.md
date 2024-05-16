@@ -10,7 +10,6 @@ In the present repository, we can find the quantitative proteomic data analysis 
 Additionally, in this repository, there is a pipeline for analyzing label-free and labelled quantitative proteomic data from several computational platforms such as MaxQuant, MSFragger, Proteome Discoverer and DIA-NN, whose files can be found in the "Pipeline" folder containing the main.R file, which drives the developed functionalities, and the files dataprocessing.R, quality_metrics.R, statisticalAnalysis.R, overviewfigures.R, enrichment.R, and Network.R, which contain the set of implemented functions. The set of files in the "Pipeline" folder serves the functions of the application in RStudio.
 
 <br>
-
 # Requirement
 - "ProteinGroups.txt" file from MaxQuant. a test dataset can be found on "data" folder.
 - "combined_protein.tsv" file from MSFragger.
@@ -18,7 +17,6 @@ Additionally, in this repository, there is a pipeline for analyzing label-free a
 - Output file from Proteome Discoverer. 
 
 <br>
-
 # Outputs
 1. Quality metrics:
 - Boxplots
