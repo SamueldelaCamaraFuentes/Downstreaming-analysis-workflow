@@ -1,16 +1,20 @@
 
  ![Alt text](interface.gif) 
-# Label Free Downstreaming Analysis 
-En este repositorio se encuentra todo el código generado que comprende la herramienta de análisis downstreaming de datos de proteómica cuantitativa *Label free*.
+# Label Free Downstreaming Analysis
+
+In this repository, the downstreaming analysis code for quantitative proteomics analysis tool can be found.
 <br>
 <br>
-En el presente repositorio podemos encontrar el software de análisis de datos de proteómica cuantitativa *Label free* enfocado en el análisis de datos tanto de DDA como de DIA procedentes de las plataformas computacionales MaxQuant, MSFragger y DIA-NN. Dentro de sus funcionalidades destacan el llevar a cabo un preprocesado de los datos, análisis de expresión diferencial, análisis funcional y de interacción de proteínas, junto con la visualización de cada una de las anteriores etapas mencionadas
-Además en el presente repositorio se encuentra un *pipeline* para el análisis de datos de proteómica cuantitativa *label free* procedentes de MaxQuant cuyos archivos podemos encontrar en la carpeta "Pipeline" que contiene el archivo main.R eje conductor de las funcionalidades desarrolladas y los archivos dataprocessing.R quality_metrics.R, statisticalAnalysis.R, overviewfigures.R, enrichment.R y Network.R que contienen el conjunto de funciones implementadas. El conjunto de archivos presentes en la carpeta "Pipeline" desempeñan las funciones de la aplicación en RStudio.   
+In the present repository, we can find the quantitative proteomic data analysis software focused on analyzing both DDA and DIA label free and labelled data from MaxQuant, MSFragger, Proteome Discoverer and DIA-NN computational platforms. Its functionalities include preprocessing of data, differential expression analysis, functional and protein interaction analysis, along with visualization of each of the aforementioned stages.
+
+Additionally, in this repository, there is a pipeline for analyzing label-free and labelled quantitative proteomic data from several computational platforms such as MaxQuant, MSFragger, Proteome Discoverer and DIA-NN, whose files can be found in the "Pipeline" folder containing the main.R file, which drives the developed functionalities, and the files dataprocessing.R, quality_metrics.R, statisticalAnalysis.R, overviewfigures.R, enrichment.R, and Network.R, which contain the set of implemented functions. The set of files in the "Pipeline" folder serves the functions of the application in RStudio.
+
 <br>
-# Requisitos
-- Archivo "ProteinGroups.txt" de MaxQuant. Encontramos un dataset de prueba en la carpeta "data".
-- Archivo "combined_protein.tsv" de MSFragger.
-- Archivo "report.pg.matrix.tsv" de DIA-NN.
+# Requirement
+- "ProteinGroups.txt" file from MaxQuant. a test dataset can be found on "data" folder.
+- "combined_protein.tsv" file from MSFragger.
+- "report.pg.matrix.tsv" file from DIA-NN.
+- Output file from Proteome Discoverer. 
 
 <br>
 # Outputs
