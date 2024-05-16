@@ -1,6 +1,6 @@
 
  ![Alt text](interface.gif) 
-# Label Free Downstreaming Analysis
+# Shotgun Proteomics Downstreaming Analysis
 
 In this repository, the downstreaming analysis code for quantitative proteomics analysis tool can be found.
 <br>
