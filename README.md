@@ -32,6 +32,7 @@ Additionally, in this repository, there is a pipeline for analyzing label-free a
 2. Overview figures:
 - Volcano plot
 - Heatmap
+- Protein Intensity plot
 3. Enrichment:
 - Dotplot
 - Barplot
