@@ -14,7 +14,7 @@ Additionally, in this repository, there is a pipeline for analyzing label-free a
 # Requisites
 - "ProteinGroups.txt" file from MaxQuant. a test dataset can be found on "data" folder.
 - "combined_protein.tsv" file from MSFragger.
-- "report.pg.matrix.tsv" file from DIA-NN.
+- "report.pg.matrix.tsv" file along with "report.tsv" file from DIA-NN in the same directory.
 - Output file from Proteome Discoverer. 
 
 <br>
