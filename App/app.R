@@ -39,8 +39,9 @@ ui <- dashboardPage(
                                             label = "Platform",
                                             choices = list("MaxQuant" = 1, 
                                                            "MSFragger" = 2,
-                                                           "DIA-NN" = 3),
-                                            selected = 3),
+                                                           "DIA-NN" = 3,
+                                                           "Proteome Discoverer" = 4),
+                                            selected = 4),
                                 selectInput(inputId = "labeltype", 
                                             label = "Type",
                                             choices = list("Label free" = 1, 
@@ -77,9 +78,9 @@ ui <- dashboardPage(
                                 numericInput(inputId = "minfiltro",
                                              label = "Minimum values for filtering per condition",
                                              value = 0),
-                                h4("Filtering by unique peptides"),
+                                h4("Additional filtering step"),
                                 textInput(inputId = "uniquecol",
-                                          label = "Column name of unique peptides",
+                                          label = "Column name of unique peptides or PSMs",
                                           value = "Unique.peptides"),
                                 numericInput(inputId = "numberuniquepep",
                                              label = "Minimum number of unique peptides",
@@ -260,6 +261,11 @@ ui <- dashboardPage(
                                              choices = list("Simple t test approach" = 1, 
                                                             "Limma approach" = 2),
                                              selected = 1),
+                                 switchInput(inputId = "PSMaware",
+                                             label = "PSMs correction",
+                                             value = FALSE,
+                                             onLabel = "Yes",
+                                             offLabel = "No"),
                                  selectInput(inputId = "proteins", 
                                              label = "Choose a way to proceed:",
                                              choices = list("Common proteins" = 1, 
@@ -319,7 +325,10 @@ ui <- dashboardPage(
                                  textInput(inputId = "heatmaptitle",
                                            label = "Insert a title",
                                            value = "Treatment vs Control"),
-                                 strong(h4("Differential heatmap"))
+                                 strong(h4("Protein Intensity")),
+                                 textInput(inputId = "proteinname",
+                                           label = "Insert a title",
+                                           value = "Treatment vs Control")
                                  ),
                        
                        menuItem("Download plot options", icon =  icon("download"),
@@ -499,12 +508,7 @@ ui <- dashboardPage(
                               title = "Important Updates",
                                 h4(tags$b("Data analysis:")," Generalitation for MSFragger."),
                                 h4(tags$b("Data analysis:")," Generalitation for DIA-NN."),
-                                h4(tags$b("Data handling:")," New normalization and filtering methods available."),
-                                h4(tags$b("Quality metrics:")," Scatter plot, Q-Q plot and Correlation plot implemented."),
-                                h4(tags$b("Quality metrics:"),"New compact display options for plots"),
-                                h4(tags$b("Differential analysis:")," Q value analysis available along with presence and absence proteins."),
-                                h4(tags$b("Differential analysis:")," Paired analysis available."),
-                                h4(tags$b("Differential analysis:")," t.test base R approach along with limma approach available."),
+                                h4(tags$b("Data analysis:")," Generalitation for Proteome Discoverer."),
                               width = 12,
                               solidHeader = TRUE,
                               status = "info"),
@@ -512,7 +516,7 @@ ui <- dashboardPage(
                             box(
                               title = "Overview",
                               p(h4("This interactive web application has been developed to perform differential expression analysis with “one click”
-                                and to visualize label-free quantitative proteomic datasets preprocessed with several computational platforms such us MaxQuant, MSFragger and DIA-NN, providing the user with the ability of perfoming a complete pre processing step
+                                and to visualize label-free quantitative proteomic datasets along with labelled TMT datasets preprocessed with several computational platforms such us MaxQuant, MSFragger and DIA-NN, providing the user with the ability of perfoming a complete pre processing step
                                 that covers the filtering, normalization and imputation of data, information about aspects of data such us distribution, variation or correlation.
                                 The possibility of performing differential expression analysis and enrichment with visualization plots.
                                 Finally an interaction analysis using string database can be performed.")), 
@@ -524,7 +528,7 @@ ui <- dashboardPage(
                           
                             box(
                               title = "Upcoming Updates",
-                              h4(tags$b("Generalitation for Proteome Discoverer.")),
+                              h4(tags$b("Generalitation for PEAKS Studio.")),
                               width = 12,
                               solidHeader = TRUE,
                               status = "success")
@@ -541,7 +545,7 @@ ui <- dashboardPage(
                            fluidRow(
                              column(3, h3("Columns"),tableOutput("LOG2.names")),
                              box(
-                               title = "Venn Diagram", width = 6, status = "primary",
+                               title = "Venn Diagram", width = 8, status = "primary", #width = 6
                                plotOutput(outputId = "venn", height = "800px")
                              ),
                              box(
@@ -614,9 +618,15 @@ ui <- dashboardPage(
                                box(
                                title = "Differential heatmap", width = 6, status = "primary",
                                plotOutput(outputId = "difheatmapplot", height = "600px")
-                             )
+                             ),
                              
-                           )
+                             box(
+                               title = "Protein Intensity", width = 6, status = "primary",
+                               plotOutput(outputId = "difboxplotplot", height = "600px")
+                             ))
+                             
+                           
+                           
                          ),
                 ),
                 
@@ -679,13 +689,20 @@ server <- function(input, output) {
       req(input$file) #Controls whether a file has been uploaded or not
   
       raw <- read.delim(input$file$datapath, sep = "\t", stringsAsFactors = FALSE, colClasses = "character") 
-      df<- quick_filtering(raw, input$intensitymode, input$comptplatform, input$organismfocus)
+      df<- quick_filtering(raw, input$intensitymode, input$comptplatform, input$organismfocus, input$condition1, input$condition2)
       return(df)
     } else if (input$comptplatform == 3){
       req(input$file) #Controls whether a file has been uploaded or not
       
       raw <- read.delim(input$file$datapath, sep = "\t", stringsAsFactors = FALSE, colClasses = "character", check.names = FALSE) 
-      df<- quick_filtering(raw, input$intensitymode, input$comptplatform, input$organismfocus)
+      df<- quick_filtering(raw, input$intensitymode, input$comptplatform, input$organismfocus, input$condition1, input$condition2) #Marcarlo como dataframe 
+      df <- as.data.frame(df)
+      return(df)
+    } else if (input$comptplatform == 4){
+      
+      raw <- as.data.frame(readxl::read_xlsx(input$file$datapath))
+      
+      df<- quick_filtering(raw, input$intensitymode, input$comptplatform, input$organismfocus, input$condition1, input$condition2)
       return(df)
     }
     
@@ -708,17 +725,20 @@ server <- function(input, output) {
     conditions <- c(input$condition1, input$condition2)
     replicas_condicion1 <- input$repcond1
     replicas_condicion2 <- input$repcond2
+    if (input$labeltype == 2){ #We add this detail in order to get rid of the proteins that have NAs in all the measurements with TMT label. Only quantified proteins remain
+     data_quick <-  data_quick()[rowSums(is.na(data_quick()[, cond.names()])) != length(cond.names()), ]
+    }
     unique_proteins <- obtain_unique_proteins(data_quick(), conditions, LOG2.names(), replicas_condicion1, replicas_condicion2)
     return(unique_proteins)
   })
   
   unique_control <- reactive({
-    unique_proteins <- as.data.frame(unique()[1])
+    unique_proteins <- as.data.frame(unique()[1], check.names = FALSE)
     return(unique_proteins)
   })
   
   unique_treatment <- reactive({
-    unique_proteins <- as.data.frame(unique()[2])
+    unique_proteins <- as.data.frame(unique()[2], check.names = FALSE)
     return(unique_proteins)
   })
   
@@ -727,7 +747,7 @@ server <- function(input, output) {
     conditions <- c(input$condition1, input$condition2)
     min_count <- c(input$minfiltro, input$minfiltro)
     df.F <- filter_valids(data_quick(), unique(), conditions, min_count, at_least_one <- TRUE, LOG2.names(), input$labeltype)
-    df.F.unique <- subset(df.F, df.F[, input$uniquecol] > input$numberuniquepep)
+    df.F.unique <- subset(df.F, df.F[, input$uniquecol] >= input$numberuniquepep) #Filtramos por peptidos unicos 
     return(df.F.unique)
     
   })
@@ -1013,7 +1033,7 @@ server <- function(input, output) {
   difexpression <- reactive({
     validate(need(!is.null(input$pvaladj),
                   "Please select an option"))
-    statistic_dataframe <- statistical_analysis(data(), LOG2.names(), input$displaytest, input$testid, input$repcond1, input$repcond2, input$condition1, input$condition2, input$LogFCup, input$LogFCdown, input$sigcutoff, input$pvaladj, input$statselected, unique(), input$proteins)
+    statistic_dataframe <- statistical_analysis(data(), LOG2.names(), input$displaytest, input$testid, input$repcond1, input$repcond2, input$condition1, input$condition2, input$LogFCup, input$LogFCdown, input$sigcutoff, input$pvaladj, input$statselected, unique(), input$proteins, input$PSMaware, input$comptplatform)
     
     statistic_dataframe <- statistic_dataframe[-6]
     merged <- merge(total_dataset(), statistic_dataframe, by = "Protein")
@@ -1172,6 +1192,20 @@ server <- function(input, output) {
       }
     }
   )
+  
+  #Differential Boxplot
+  dif_boxplot <- reactive({
+    
+    dif_boxplot <- Diferential_boxplot(data(), first_condition = input$condition1, second_condition = input$condition2, protein = input$proteinname, LOG2.names())
+    
+    return(dif_boxplot)
+    
+  })
+  
+  output$difboxplotplot <- renderPlot({
+    dif_boxplot()
+  })
+  
   
   #Functional analysis 
   
@@ -1369,7 +1403,7 @@ server <- function(input, output) {
   
   output$downloadReport <- downloadHandler(
     # For PDF output, change this to "report.pdf"
-    filename = "Analysis_report.pdf",
+    filename = "report.pdf",
     content = function(file) {
       # Copy the report file to a temporary directory before processing it, in
       # case we don't have write permissions to the current working dir (which
